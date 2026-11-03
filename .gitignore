@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.env.*
+
+# Officer exports contain personal email addresses. Keep them on this machine.
+*Vitality Report*.csv
+
+# Local editor and chat state
+.cursor/
