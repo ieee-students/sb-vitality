@@ -197,6 +197,7 @@ export function BranchTable({
                       </td>
                       {row.cycles.map((cycleCol) => {
                         const isOpen = cycleCol.kind === "open";
+                        const isNotEstablished = cycleCol.standing === "not-established";
                         const naOfficersHint = historicalOfficersHint(
                           cycleCol.rebateYear,
                           cycleCol.membersLabel,
@@ -205,11 +206,11 @@ export function BranchTable({
                         return (
                           <Fragment key={cycleCol.rebateYear}>
                             <td className="num year-start">{cell(cycleCol.members)}</td>
-                            <td className="num">{cell(cycleCol.events)}</td>
+                            <td className="num">{isNotEstablished ? "—" : cell(cycleCol.events)}</td>
                             {cycleCol.showUnreported ? (
                               <td className="num">{cell(cycleCol.unreported)}</td>
                             ) : null}
-                            <td>{planLabel(cycleCol.plan)}</td>
+                            <td>{isNotEstablished ? "—" : planLabel(cycleCol.plan)}</td>
                             {cycleCol.officersAvailable ? (
                               <td className="num" title={currentOfficersHint}>
                                 {!row.hasReportedOfficers ? (

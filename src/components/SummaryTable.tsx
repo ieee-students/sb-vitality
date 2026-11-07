@@ -68,13 +68,18 @@ export function SummaryTable({
     );
   }
 
-  function standingCells(items: { good: number; total: number }[]) {
+  function standingCells(items: { good: number; total: number; allBranches?: number }[]) {
     return standingColumns.map((column, index) => {
       const item = items[index];
+      const hint = item
+        ? item.allBranches && item.total < item.allBranches
+          ? `${formatNumber(item.good)} of ${formatNumber(item.total)} active branches for ${column.label} (excludes ${formatNumber(item.allBranches - item.total)} not established at that date).`
+          : `${formatNumber(item.good)} of ${formatNumber(item.total)} branches for ${column.label}.`
+        : undefined;
       return (
         <Fragment key={column.label}>
           <td className="num year-start">{item ? formatNumber(item.good) : "—"}</td>
-          <td className="num">{item ? formatPercent(item.total === 0 ? null : item.good / item.total) : "—"}</td>
+          <td className="num" title={hint}>{item ? formatPercent(item.total === 0 ? null : item.good / item.total) : "—"}</td>
         </Fragment>
       );
     });

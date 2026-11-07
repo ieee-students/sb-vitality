@@ -9,6 +9,7 @@ import {
   branchCycleHeading,
   cycleHeading,
   dissolutionLabel,
+  formatNumber,
   formatUsd,
   standingLabel,
 } from "./format";
@@ -18,6 +19,7 @@ import { assessOfficers, evaluateStanding, requirementGap } from "./standing";
 import type {
   ActItem,
   Branch,
+  BranchChange,
   BranchEvaluation,
   BranchRow,
   ChartPoint,
@@ -25,11 +27,13 @@ import type {
   CycleGapSummary,
   Cycles,
   DissolutionTier,
+  Gap,
   GapCounts,
   Kpis,
   MemberChange,
   OfficerContactRole,
   OfficerContactSummary,
+  PlanValue,
   ScopeLevel,
   SortState,
   Standing,
@@ -81,6 +85,24 @@ export function evaluateBranch(
     const members = cycleMembers(branch, cycle);
     const events = branch.eventsByYear[cycle.eventYear] ?? null;
     const plan = branch.plansByYear[cycle.planYear] ?? "blank";
+
+    const isEstablished = cycle.kind === "open" || members != null;
+    if (!isEstablished) {
+      const standing: Standing = "not-established";
+      const gap: Gap = "not-established";
+      return {
+        cycle,
+        members: null,
+        events: null,
+        plan: "blank" as PlanValue,
+        standing,
+        gap,
+        allowance: null,
+        expectedRebate: null,
+        foregoneRebate: null,
+      };
+    }
+
     const standing = evaluateStanding({
       members,
       events,
@@ -131,7 +153,7 @@ export function evaluateAll(
 }
 
 function emptyCounts(): StandingCounts {
-  return { good: 0, needsSupport: 0, inactive: 0, incomplete: 0 };
+  return { good: 0, needsSupport: 0, inactive: 0, incomplete: 0, notEstablished: 0 };
 }
 
 export function countStanding(values: Standing[]): StandingCounts {
@@ -140,7 +162,8 @@ export function countStanding(values: Standing[]): StandingCounts {
     if (standing === "good") counts.good += 1;
     else if (standing === "needs-support") counts.needsSupport += 1;
     else if (standing === "inactive") counts.inactive += 1;
-    else counts.incomplete += 1;
+    else if (standing === "incomplete") counts.incomplete += 1;
+    else if (standing === "not-established") counts.notEstablished = (counts.notEstablished ?? 0) + 1;
   }
   return counts;
 }
@@ -184,6 +207,38 @@ export function memberComparison(evaluations: BranchEvaluation[], cycles: Cycles
   };
 }
 
+export function branchComparison(evaluations: BranchEvaluation[], cycles: Cycles): BranchChange | null {
+  const open = cycles.open;
+  const memberSource = open.members;
+  const previousYear =
+    memberSource.source === "current"
+      ? cycles.snapshotYears.at(-1) ?? null
+      : [...cycles.snapshotYears].reverse().find((year) => year < memberSource.year) ?? null;
+  if (previousYear == null) return null;
+
+  const current = evaluations.length;
+  const previous = evaluations.filter(
+    (item) => item.branch.membersByYear[previousYear] != null,
+  ).length;
+  const diff = current - previous;
+
+  const historyParts = cycles.snapshotYears.map((year) => {
+    const count = evaluations.filter((item) => item.branch.membersByYear[year] != null).length;
+    return `${formatNumber(count)} at Dec ${year}`;
+  });
+  const historyText = `Active units: ${formatNumber(current)} today · ${[...historyParts].reverse().join(" · ")} based on member snapshots.`;
+
+  return {
+    current,
+    previous,
+    previousLabel: `31 Dec ${previousYear}`,
+    difference: diff,
+    direction: diff > 0 ? "up" : diff < 0 ? "down" : "flat",
+    percent: previous === 0 ? null : diff / previous,
+    historyText,
+  };
+}
+
 export function buildKpis(evaluations: BranchEvaluation[], cycles: Cycles): Kpis {
   const memberValues = evaluations.map((item) => item.open.members);
   const members = sumKnown(memberValues);
@@ -215,6 +270,7 @@ export function buildKpis(evaluations: BranchEvaluation[], cycles: Cycles): Kpis
 
   return {
     branchCount: evaluations.length,
+    branchChange: branchComparison(evaluations, cycles),
     branchesWithoutAllOfficers: evaluations.filter((item) => !item.hasAllOfficers).length,
     branchesWithoutReportedOfficers: evaluations.filter((item) => !item.hasReportedOfficers).length,
     branchesWithoutCounselor: evaluations.filter((item) => !item.hasCounselor).length,
@@ -231,8 +287,18 @@ export function buildKpis(evaluations: BranchEvaluation[], cycles: Cycles): Kpis
     goodStanding,
     goodStandingRate: rate(goodStanding, evaluations.length),
     previousRates: cycles.completed.map((cycle, index) => {
-      const counts = countStanding(evaluations.map((item) => item.cycles[index + 1].standing));
-      return { rebateYear: cycle.rebateYear, rate: rate(counts, evaluations.length), counts };
+      const standings = evaluations.map((item) => item.cycles[index + 1].standing);
+      const counts = countStanding(standings);
+      const activeBranches = evaluations.filter(
+        (item) => item.branch.membersByYear[cycle.eventYear] != null,
+      ).length;
+      return {
+        rebateYear: cycle.rebateYear,
+        rate: rate(counts, activeBranches),
+        counts,
+        activeBranches,
+        totalBranches: evaluations.length,
+      };
     }),
     expectedRebate,
     foregoneRebate,
@@ -309,7 +375,9 @@ export function countCycleGaps(
       counts.multiple += 1;
     } else if (gap === "incomplete") {
       counts.incomplete += 1;
-    } else {
+    } else if (gap === "not-established") {
+      counts.notEstablished = (counts.notEstablished ?? 0) + 1;
+    } else if (gap === "good") {
       counts.good += 1;
     }
   }
@@ -427,18 +495,29 @@ export function summaryRows(
       sectionsWithSsr,
       hasSacChair: sectionsWithSac > 0,
       hasSsr: sectionsWithSsr > 0,
-      standings: items[0].cycles.map((cycleResult) => ({
-        label: cycleHeading(cycleResult.cycle, ignoreOpenPlan),
-        planRequired: cycleResult.cycle.kind === "complete" || !ignoreOpenPlan,
-        officersRequired: cycleResult.cycle.kind === "open",
-        good: items.filter((item) => {
+      standings: items[0].cycles.map((cycleResult) => {
+        const cycleStandings = items.map((item) => {
           const match = item.cycles.find(
             (candidate) => candidate.cycle.rebateYear === cycleResult.cycle.rebateYear,
           );
-          return match?.standing === "good";
-        }).length,
-        total: items.length,
-      })),
+          return match?.standing ?? "incomplete";
+        });
+        const counts = countStanding(cycleStandings);
+        const activeBranches =
+          cycleResult.cycle.kind === "open"
+            ? items.length
+            : items.filter(
+                (item) => item.branch.membersByYear[cycleResult.cycle.eventYear] != null,
+              ).length;
+        return {
+          label: cycleHeading(cycleResult.cycle, ignoreOpenPlan),
+          planRequired: cycleResult.cycle.kind === "complete" || !ignoreOpenPlan,
+          officersRequired: cycleResult.cycle.kind === "open",
+          good: counts.good,
+          total: activeBranches,
+          allBranches: items.length,
+        };
+      }),
       foregone,
       immediate: items.filter((item) => isImmediate(item.dissolution.tier)).length,
       attention: items.filter((item) => needsAttention(item.open.standing)).length,

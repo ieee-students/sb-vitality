@@ -100,15 +100,22 @@ describe("GapPanel requirement gap breakdown", () => {
     expect(html).toContain("Fewer than 4 events");
     expect(html).toContain("No reported officers");
     expect(html).toContain("Annual plan not submitted");
-    expect(html).toContain("2 requirements missing");
-    expect(html).toContain("3 requirements missing");
-    expect(html).toContain("All 4 requirements missing");
+    expect(html).toContain("2 requirements not met");
+    expect(html).toContain("3 requirements not met");
+    expect(html).toContain("All 4 requirements not met");
     expect(html).toContain("Incomplete data");
     expect(html).toContain("1,122"); // 2027 events
     expect(html).toContain("410"); // 2026 events
     expect(html).toContain("390"); // 2025 events
     expect(html).toContain("Excluded*"); // 2027 excluded plan
     expect(html).toContain("N/A*"); // historical officers
+
+    // Verify multi-requirement failures appear before single-requirement failures
+    const idxAll4 = html.indexOf("All 4 requirements not met");
+    const idxUnder12 = html.indexOf("Under 12 members");
+    expect(idxAll4).toBeGreaterThan(-1);
+    expect(idxUnder12).toBeGreaterThan(-1);
+    expect(idxAll4).toBeLessThan(idxUnder12);
   });
 
   it("renders clear labels without 'only' suffix in single year fallback (plan excluded)", () => {
@@ -130,9 +137,9 @@ describe("GapPanel requirement gap breakdown", () => {
     expect(html).toContain("No reported officers");
     expect(html).not.toContain("No reported officers only");
     expect(html).not.toContain("Annual plan not submitted");
-    expect(html).toContain("2 requirements missing");
-    expect(html).toContain("All 3 requirements missing");
-    expect(html).not.toContain("All 4 requirements missing");
+    expect(html).toContain("2 requirements not met");
+    expect(html).toContain("All 3 requirements not met");
+    expect(html).not.toContain("All 4 requirements not met");
     expect(html).toContain("Incomplete data");
     expect(html).toContain("1,122");
     expect(html).toContain("897");
@@ -154,9 +161,9 @@ describe("GapPanel requirement gap breakdown", () => {
     expect(html).toContain("Fewer than 4 events");
     expect(html).toContain("No reported officers");
     expect(html).toContain("Annual plan not submitted");
-    expect(html).toContain("2 requirements missing");
-    expect(html).toContain("3 requirements missing");
-    expect(html).toContain("All 4 requirements missing");
+    expect(html).toContain("2 requirements not met");
+    expect(html).toContain("3 requirements not met");
+    expect(html).toContain("All 4 requirements not met");
     expect(html).toContain("Incomplete data");
   });
 });

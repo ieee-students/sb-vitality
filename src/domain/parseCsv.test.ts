@@ -28,14 +28,20 @@ describe("parseVitalityCsv", () => {
     expect(harbor?.emails.chair).toBe("chair.stb90001@example.com");
   });
 
-  it("keeps a blank events cell unknown and a zero as zero", () => {
-    const westmill = branchNamed("Westmill Institute, City Campus");
-    const pine = branchNamed("Pine Ridge University");
-    expect(westmill?.eventsByYear[2026]).toBeNull();
+  it("treats a blank events cell as 0 and keeps a zero as zero", () => {
+    const workbook = parseVitalityCsv(sampleCsv());
+    const westmill = workbook.branches.find(
+      (branch) => branch.schoolName === "Westmill Institute, City Campus",
+    );
+    const pine = workbook.branches.find(
+      (branch) => branch.schoolName === "Pine Ridge University",
+    );
+    expect(westmill?.eventsByYear[2026]).toBe(0);
     expect(westmill?.plansByYear[2027]).toBe("blank");
     expect(pine?.eventsByYear[2026]).toBe(0);
-    expect(westmill?.unreportedByYear[2026]).toBeNull();
+    expect(westmill?.unreportedByYear[2026]).toBe(0);
     expect(pine?.unreportedByYear[2026]).toBe(3);
+    expect(workbook.quality.blankEventCells).toBe(1);
   });
 
   it("uses only example.com addresses", () => {

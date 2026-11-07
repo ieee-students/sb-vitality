@@ -58,11 +58,15 @@ export function assessDissolution(
   const latest = ordered[ordered.length - 1];
   const latestResult = operationalResult(latest.members, latest.events);
   if (latestResult === "unknown") {
+    const detail =
+      latest.members == null
+        ? `${latest.year} membership is missing, so prior dissolution streaks do not apply.`
+        : `${latest.year} membership or meetings are blank, so the streak cannot be judged.`;
     return {
       tier: "unknown",
       streak: 0,
       failedYears: [],
-      detail: `${latest.year} membership or meetings are blank, so the streak cannot be judged.`,
+      detail,
     };
   }
   if (latestResult === "met") {

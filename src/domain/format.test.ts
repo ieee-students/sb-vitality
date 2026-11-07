@@ -3,11 +3,13 @@ import { MIN_EVENTS, MIN_MEMBERS } from "../config/defaults";
 import {
   branchCycleHeading,
   counselorHint,
+  formatBranchChange,
   gapLabel,
   goodStandingHint,
   headingLines,
   historicalOfficersHint,
   officersHint,
+  standingLabel,
 } from "./format";
 
 describe("good standing hint", () => {
@@ -94,10 +96,37 @@ describe("good standing hint", () => {
     expect(gapLabel("only-events")).toBe("Fewer than 4 events");
     expect(gapLabel("only-officers")).toBe("No reported officers");
     expect(gapLabel("only-plan")).toBe("Annual plan not submitted");
-    expect(gapLabel("two-requirements")).toBe("2 requirements missing");
-    expect(gapLabel("three-requirements")).toBe("3 requirements missing");
-    expect(gapLabel("four-requirements")).toBe("All 4 requirements missing");
+    expect(gapLabel("two-requirements")).toBe("2 requirements not met");
+    expect(gapLabel("three-requirements")).toBe("3 requirements not met");
+    expect(gapLabel("four-requirements")).toBe("All 4 requirements not met");
     expect(gapLabel("incomplete")).toBe("Incomplete data");
+    expect(gapLabel("not-established")).toBe("Not established");
     expect(gapLabel("good")).toBe("In good standing");
+    expect(standingLabel("not-established")).toBe("Not established");
+  });
+
+  it("formats branch change notes cleanly", () => {
+    expect(
+      formatBranchChange({
+        current: 3941,
+        previous: 3742,
+        previousLabel: "31 Dec 2025",
+        difference: 199,
+        direction: "up",
+        percent: 0.053,
+        historyText: "",
+      }),
+    ).toBe("Up 199 (5%) vs 31 Dec 2025");
+    expect(
+      formatBranchChange({
+        current: 10,
+        previous: 10,
+        previousLabel: "31 Dec 2025",
+        difference: 0,
+        direction: "flat",
+        percent: 0,
+        historyText: "",
+      }),
+    ).toBe("No change vs 31 Dec 2025");
   });
 });

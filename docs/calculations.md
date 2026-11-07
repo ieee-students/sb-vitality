@@ -24,7 +24,11 @@ Headers are matched exactly after trimming.
 | `Section Chair Email`, `Section SAC Email`, `Section Student Rep Email` | Section Chair, Section SAC Chair, and Section Student Representative (SSR). A section is counted as having a SAC Chair or SSR when any branch row in that section has a non-empty email for that role (shown as section counts in the region table and `Yes` / `No` in the section table). On a section view, non-empty contact emails for these three roles are displayed in the page header with a comma-separated clipboard copy action |
 | `RSAC Email`, `Region Student Rep Email`, `Additional RSAC Email`, `Additional Region Student Rep Email` | Region student-activities leadership. On a region view, non-empty contact emails for RSAC and Region Student Rep (plus Additional RSAC and Additional Region Student Rep when present) are displayed in the page header with a comma-separated clipboard copy action |
 
-A blank cell is missing. It is not zero. A cell that is not a number is also missing. `Yes` and `No` (any case, also `Y` / `N` and `Submitted` / `Not submitted`) are the plan values. Any other plan text is unrecognized and is treated as missing.
+A blank cell in `Total Members`, `Dec YYYY Members`, or `YYYY Annual Plan` is missing. It is not zero. A cell that is not a number is also missing. `Yes` and `No` (any case, also `Y` / `N` and `Submitted` / `Not submitted`) are the plan values. Any other plan text is unrecognized and is treated as missing.
+
+Membership blanks are never treated as zero. Student branches chartered or reactivated in recent years do not have historical December membership records. Treating blank historical membership counts as zero would falsely register those units as having failed minimum membership requirements in years prior to their establishment, causing spurious delinquency and dissolution warnings. Keeping them as missing (`null`) correctly evaluates them as Incomplete history for those completed cycles, ensuring newly established branches are not penalized for history that predates them.
+
+A blank cell in `YYYY Events` or `YYYY Unreported Events` is treated as 0 reported events. In the reporting system, branches that have never reported events have blank cells rather than zeros; treating them as 0 allows vitality standing, dissolution watchlists, and foregone rebate calculations to evaluate these inactive branches accurately rather than treating them as missing data.
 
 `R0` is Region 10. `R10`, `Region 10`, and `10` are the same region. Other numeric region codes stay `R1` through `R9`.
 
@@ -53,7 +57,7 @@ A completed rebate year Y is evaluable when all three columns exist: `Dec {Y-1} 
 
 Official 2024 vitality is not calculated. That cycle needs Dec 2023 members, 2023 events, and the 2024 plan, and those columns are not in the current export.
 
-There is no earlier roster in the file, so the number of student branches has no year-over-year change. Member and event trends use only the branches in the current file.
+Active student branches for prior snapshots are derived from units having recorded December membership for that year (units chartered or reactivated later have blank snapshot cells). Branch change compares the current roster count with the latest prior December snapshot across the branches in view. Member and event trends use the branches in the current file.
 
 Member change compares the summed open-cycle membership with the summed latest earlier December snapshot across the branches in view.
 
@@ -77,7 +81,7 @@ When the open-cycle plan is set aside:
 - **Inactive** if reported events are 0.
 - **Needs support** for every other complete row.
 
-Rates use all branches in the current view as the denominator, including incomplete rows. Incomplete rows are also counted on their own so a low rate is not mistaken for a failed branch.
+For the open cycle, good standing rates divide branches in good standing by the total branches in view, including incomplete rows. For completed cycles, rates divide branches in good standing by the active branches in that cycle (units having a December membership snapshot for that year). Branches chartered or reactivated in later cycles are marked as "Not established" for prior cycles and are excluded from those earlier denominators so historical qualification rates accurately reflect the active units of each year. Incomplete rows among active branches are counted on their own so low rates are not mistaken for failed branches.
 
 A total across regions, sections, or listed student branches divides the summed branches in good standing by the summed branches. Numeric totals across listed student branches sum known cells and stay missing (`—`) when every listed cell in that column is blank.
 
@@ -89,16 +93,18 @@ For the open cycle, requirements include members, reported events, reported offi
 
 A requirement fails when members are under 12, reported events are under 4, no officer or counselor is reported, or a required plan is not Yes.
 
-Single-requirement rows indicate that the branch meets all other requirements:
+The gap table orders requirement gaps by intervention need, listing multi-requirement failures first:
+- **All 4 requirements not met** (when 4 requirements are evaluated)
+- **3 requirements not met** (when 4 requirements are evaluated) or **All 3 requirements not met** (when the annual plan is set aside and 3 requirements are evaluated)
+- **2 requirements not met**
+
+Followed by single-requirement rows indicating that the branch meets all other requirements:
 - **Under 12 members** (meets events, reported officers, and plan if required)
 - **Fewer than 4 events** (meets 12 members, reported officers, and plan if required)
 - **No reported officers** (meets 12 members, 4 events, and plan if required)
 - **Annual plan not submitted** (when the open-cycle plan is required; meets 12 members, 4 events, and reported officers)
 
-When multiple requirements fail:
-- **2 requirements missing**
-- **3 requirements missing** (when 4 requirements are evaluated) or **All 3 requirements missing** (when the annual plan is set aside and 3 requirements are evaluated)
-- **All 4 requirements missing** (when 4 requirements are evaluated)
+Followed by **Incomplete data** and **Not established yet** (units established in a later year).
 
 The annual plan gap is absent while the checkbox sets the plan aside.
 
@@ -112,7 +118,7 @@ A completed activity year is a year that has both a December member column and a
 - Not on track: either number is below its minimum.
 - Incomplete: either number is missing.
 
-A completed year is **met**, **failed**, or **unknown** with the same tests. The streak walks backward from the latest completed year through adjacent failed years. An unknown year or a gap in the years ends the streak. A met year ends it as well.
+A completed year is **met**, **failed**, or **unknown** with the same tests. The streak walks backward from the latest completed year through adjacent failed years. An unknown year or a gap in the years ends the streak (preventing newly chartered or reactivated units with missing prior membership snapshots from accumulating false failure streaks). A met year ends it as well.
 
 | Condition | Tier |
 | --- | --- |

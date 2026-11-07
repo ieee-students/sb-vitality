@@ -2,11 +2,12 @@ import type { EmailKey } from "../config/defaults";
 
 export type PlanValue = "yes" | "no" | "blank" | "unrecognized";
 
-export type Standing = "good" | "needs-support" | "inactive" | "incomplete";
+export type Standing = "good" | "needs-support" | "inactive" | "incomplete" | "not-established";
 
 export type Gap =
   | "good"
   | "incomplete"
+  | "not-established"
   | "only-members"
   | "only-events"
   | "only-officers"
@@ -180,6 +181,7 @@ export interface StandingCounts {
   needsSupport: number;
   inactive: number;
   incomplete: number;
+  notEstablished?: number;
 }
 
 export interface MemberChange {
@@ -190,8 +192,19 @@ export interface MemberChange {
   percent: number | null;
 }
 
+export interface BranchChange {
+  current: number;
+  previous: number;
+  previousLabel: string;
+  difference: number;
+  direction: "up" | "down" | "flat";
+  percent: number | null;
+  historyText: string;
+}
+
 export interface Kpis {
   branchCount: number;
+  branchChange: BranchChange | null;
   branchesWithoutAllOfficers: number;
   branchesWithoutReportedOfficers: number;
   branchesWithoutCounselor: number;
@@ -207,7 +220,13 @@ export interface Kpis {
   unreportedMissing: number;
   goodStanding: StandingCounts;
   goodStandingRate: number | null;
-  previousRates: { rebateYear: number; rate: number | null; counts: StandingCounts }[];
+  previousRates: {
+    rebateYear: number;
+    rate: number | null;
+    counts: StandingCounts;
+    activeBranches: number;
+    totalBranches: number;
+  }[];
   expectedRebate: number;
   foregoneRebate: number;
   unknownRebateBranches: number;
@@ -233,6 +252,7 @@ export interface GapCounts {
   missingFour: number;
   multiple: number;
   incomplete: number;
+  notEstablished?: number;
   good: number;
 }
 
@@ -266,6 +286,7 @@ export interface SummaryRow {
     total: number;
     planRequired: boolean;
     officersRequired?: boolean;
+    allBranches?: number;
   }[];
   foregone: number;
   immediate: number;

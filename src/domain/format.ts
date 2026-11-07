@@ -1,5 +1,5 @@
 import { MIN_EVENTS, MIN_MEMBERS, REQUIRED_OFFICERS } from "../config/defaults";
-import type { Cycle, DissolutionTier, Gap, MemberChange, PlanValue, Standing } from "./types";
+import type { BranchChange, Cycle, DissolutionTier, Gap, MemberChange, PlanValue, Standing } from "./types";
 
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value);
@@ -37,6 +37,14 @@ export function formatMemberChange(change: MemberChange): string {
   return `${word} ${amount}${percent} vs ${change.previousLabel}`;
 }
 
+export function formatBranchChange(change: BranchChange): string {
+  if (change.direction === "flat") return `No change vs ${change.previousLabel}`;
+  const word = change.direction === "up" ? "Up" : "Down";
+  const amount = formatNumber(Math.abs(change.difference));
+  const percent = change.percent == null ? "" : ` (${formatPercent(change.percent)})`;
+  return `${word} ${amount}${percent} vs ${change.previousLabel}`;
+}
+
 export function standingLabel(standing: Standing): string {
   switch (standing) {
     case "good":
@@ -47,6 +55,8 @@ export function standingLabel(standing: Standing): string {
       return "Inactive";
     case "incomplete":
       return "Incomplete data";
+    case "not-established":
+      return "Not established";
   }
 }
 
@@ -80,15 +90,17 @@ export function gapLabel(gap: Gap): string {
     case "only-plan":
       return "Annual plan not submitted";
     case "two-requirements":
-      return "2 requirements missing";
+      return "2 requirements not met";
     case "three-requirements":
-      return "3 requirements missing";
+      return "3 requirements not met";
     case "four-requirements":
-      return "All 4 requirements missing";
+      return "All 4 requirements not met";
     case "multiple":
       return "More than one requirement";
     case "incomplete":
       return "Incomplete data";
+    case "not-established":
+      return "Not established";
     case "good":
       return "In good standing";
   }

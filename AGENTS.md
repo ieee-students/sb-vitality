@@ -25,7 +25,7 @@ When a formula changes, update the calculations document, `src/domain/`, and the
 ## Product rules that are easy to break
 
 - `R0` is Region 10. Routes use `/r10`.
-- Blank cells are missing, not zero.
+- Blank member cells are missing, not zero (avoiding false dissolution warnings for newer or reactivated units). Blank event cells are treated as 0 reported events (reflecting units with no event records in the reporting system).
 - Unreported events are displayed and are not part of the 4-event minimum.
 - The annual-plan checkbox changes only the open cycle. Dissolution risk ignores the plan.
 - Branch rebate and the section's $3 student portion are different amounts. Do not add them together.

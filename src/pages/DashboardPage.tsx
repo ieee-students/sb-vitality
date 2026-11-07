@@ -1,11 +1,10 @@
 import { useDeferredValue, useEffect, useId, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { StatusPill } from "../components/StatusPill";
-import { BarChart } from "../components/Charts";
+import { LineChart } from "../components/Charts";
 import { BranchTable } from "../components/BranchTable";
 import { FollowUpPanel } from "../components/FollowUpPanel";
 import { GapPanel } from "../components/GapPanel";
-import { KpiGrid } from "../components/KpiGrid";
+import { ActivityStatStrip, KpiGrid } from "../components/KpiGrid";
 import { OfficerContacts } from "../components/OfficerContacts";
 import { RebatePanel } from "../components/RebatePanel";
 import { SummaryTable } from "../components/SummaryTable";
@@ -350,12 +349,6 @@ export function DashboardBody({
             {formatNumber(view.branches.length)} student{" "}
             {view.branches.length === 1 ? "branch" : "branches"} in this view.
           </p>
-          <ul className="legend">
-            <li><StatusPill standing="good" /></li>
-            <li><StatusPill standing="needs-support" /></li>
-            <li><StatusPill standing="inactive" /></li>
-            <li><StatusPill standing="incomplete" /></li>
-          </ul>
         </div>
         {officerContacts ? <OfficerContacts contacts={officerContacts} scopeTitle={view.title} /> : null}
       </div>
@@ -363,9 +356,10 @@ export function DashboardBody({
       <div className="split">
         <section className="panel">
           <h2>Three-year picture</h2>
+          <ActivityStatStrip kpis={kpis} />
           <div className="chart-row">
-            <BarChart title="Student members" points={members} tone="blue" />
-            <BarChart title="Reported events" points={events} tone="teal" />
+            <LineChart title="Student members" points={members} tone="blue" />
+            <LineChart title="Reported events" points={events} tone="teal" />
           </div>
         </section>
         <GapPanel
@@ -548,18 +542,31 @@ function QualityBanner({
   incomplete: number;
 }) {
   const { quality } = model;
-  const blanks = [
+  const missingBlanks = [
     blankPhrase(quality.blankMemberCells, "member cell"),
-    blankPhrase(quality.blankEventCells, "event cell"),
     blankPhrase(quality.blankPlanCells, "plan cell"),
   ].filter((item) => item != null);
-  if (blanks.length === 0 && quality.unrecognizedPlanValues.length === 0 && incomplete === 0) return null;
+  if (
+    missingBlanks.length === 0 &&
+    quality.blankEventCells === 0 &&
+    quality.unrecognizedPlanValues.length === 0 &&
+    incomplete === 0
+  ) {
+    return null;
+  }
   return (
     <div className="banner">
-      {blanks.length > 0 ? (
+      {quality.blankEventCells > 0 ? (
+        <p>
+          {quality.blankEventCells === 1
+            ? "1 blank event cell was treated as 0 reported events (reflecting units with no event records in the reporting system)."
+            : `${quality.blankEventCells} blank event cells were treated as 0 reported events (reflecting units with no event records in the reporting system).`}
+        </p>
+      ) : null}
+      {missingBlanks.length > 0 ? (
         <>
-          <p>Blank cells are missing data, not zeros.</p>
-          <p>{joinList(blanks)}.</p>
+          <p>Blank member and annual plan cells are missing data, not zeros.</p>
+          <p>{joinList(missingBlanks)}.</p>
         </>
       ) : null}
       {quality.unrecognizedPlanValues.length > 0 ? (

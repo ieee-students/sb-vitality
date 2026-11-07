@@ -137,14 +137,25 @@ export function parseVitalityCsv(csv: string): Workbook {
 
     const eventsByYear: Record<number, number | null> = {};
     for (const year of cycles.eventsYears) {
-      const value = parseNumeric(row[`${year} Events`]);
-      eventsByYear[year] = value;
-      if (value == null) quality.blankEventCells += 1;
+      const raw = row[`${year} Events`];
+      if (raw == null || raw.trim() === "") {
+        eventsByYear[year] = 0;
+        quality.blankEventCells += 1;
+      } else {
+        const value = parseNumeric(raw);
+        eventsByYear[year] = value;
+        if (value == null) quality.blankEventCells += 1;
+      }
     }
 
     const unreportedByYear: Record<number, number | null> = {};
     for (const year of cycles.unreportedYears) {
-      unreportedByYear[year] = parseNumeric(row[`${year} Unreported Events`]);
+      const raw = row[`${year} Unreported Events`];
+      if (raw == null || raw.trim() === "") {
+        unreportedByYear[year] = 0;
+      } else {
+        unreportedByYear[year] = parseNumeric(raw);
+      }
     }
 
     const plansByYear: Record<number, PlanValue> = {};

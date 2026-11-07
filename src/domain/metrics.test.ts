@@ -22,7 +22,7 @@ import {
   defaultSummarySort,
 } from "./metrics";
 import { parseVitalityCsv } from "./parseCsv";
-import type { SummaryRow } from "./types";
+import type { BranchRow, SummaryRow } from "./types";
 
 const workbook = parseVitalityCsv(
   readFileSync(resolve(process.cwd(), "samples/sample-sb-vitality-report.csv"), "utf8"),
@@ -46,7 +46,7 @@ describe("sample rollups", () => {
     expect(kpis.members).toBe(251);
     expect(kpis.memberChange).toMatchObject({ current: 251, previous: 222, direction: "up" });
     expect(kpis.reportedEvents).toBe(35);
-    expect(kpis.reportedEventsMissing).toBe(1);
+    expect(kpis.reportedEventsMissing).toBe(0);
     expect(kpis.unreportedEvents).toBe(10);
     expect(kpis.goodStanding.good).toBe(5);
     expect(kpis.expectedRebate).toBe(710);
@@ -70,6 +70,15 @@ describe("sample rollups", () => {
       previous: 222 - firstSnapshot,
       direction: "up",
     });
+    expect(kpis.branchChange).toMatchObject({
+      current: 11,
+      previous: 10,
+      direction: "up",
+      difference: 1,
+    });
+    expect(evaluations[0].cycles[1].standing).toBe("not-established");
+    expect(kpis.previousRates[0].activeBranches).toBe(10);
+    expect(kpis.previousRates[0].rate).toBe(0.7);
   });
 
   it("moves only the open cycle when the annual plan is set aside", () => {
@@ -83,7 +92,7 @@ describe("sample rollups", () => {
     const kpis = buildKpis(evaluateAll(workbook.branches, workbook.cycles, true), workbook.cycles);
     expect(kpis.goodStanding.good).toBe(6);
     expect(kpis.expectedRebate).toBe(800);
-    expect(kpis.foregoneRebate).toBe(272);
+    expect(kpis.foregoneRebate).toBe(352);
     expect(kpis.previousRates.map((item) => item.counts.good)).toEqual([8, 8]);
   });
 
@@ -100,7 +109,7 @@ describe("sample rollups", () => {
     expect(named(false, "Maple Conservatory")?.dissolution.tier).toBe("two-year-warning");
     expect(named(false, "One Year College")?.dissolution.tier).toBe("one-year-watch");
     expect(named(false, "Westmill Institute, City Campus")?.open.standing).toBe("incomplete");
-    expect(named(true, "Westmill Institute, City Campus")?.open.standing).toBe("incomplete");
+    expect(named(true, "Westmill Institute, City Campus")?.open.standing).toBe("inactive");
     expect(urgentBranches(evaluateAll(workbook.branches, workbook.cycles, true))[0].branch.schoolName).toBe(
       "Pine Ridge University",
     );
@@ -562,10 +571,16 @@ describe("sample rollups", () => {
     const westmillOnly = filterBranches(rows, "Westmill");
     const westmillTotals = branchTotals(westmillOnly);
     expect(westmillTotals.branches).toBe(1);
-    expect(westmillTotals.unreported).toBeNull();
-    expect(westmillTotals.events.find((item) => item.label === "2026")?.value).toBeNull();
+    expect(westmillTotals.unreported).toBe(0);
+    expect(westmillTotals.events.find((item) => item.label === "2026")?.value).toBe(0);
     expect(westmillTotals.expected).toBeNull();
     expect(westmillTotals.foregone).toBeNull();
+
+    const blankMemberBranch: BranchRow = {
+      ...rows[0],
+      currentMembers: null,
+    };
+    expect(branchTotals([blankMemberBranch]).currentMembers).toBeNull();
   });
 
   it("collects related officer emails for region and section views and deduplicates comma-separated copies", () => {

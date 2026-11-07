@@ -31,17 +31,17 @@ export function GapPanel({
     };
 
     const rows = [
+      ...(planExcluded
+        ? [{ label: "All 3 requirements not met", count: fallbackGaps.missingThree }]
+        : [
+            { label: "All 4 requirements not met", count: fallbackGaps.missingFour },
+            { label: "3 requirements not met", count: fallbackGaps.missingThree },
+          ]),
+      { label: "2 requirements not met", count: fallbackGaps.missingTwo },
       { label: "Under 12 members", count: fallbackGaps.onlyMembers },
       { label: "Fewer than 4 events", count: fallbackGaps.onlyEvents },
       { label: "No reported officers", count: fallbackGaps.onlyOfficers },
       ...(planExcluded ? [] : [{ label: "Annual plan not submitted", count: fallbackGaps.onlyPlan }]),
-      { label: "2 requirements missing", count: fallbackGaps.missingTwo },
-      ...(planExcluded
-        ? [{ label: "All 3 requirements missing", count: fallbackGaps.missingThree }]
-        : [
-            { label: "3 requirements missing", count: fallbackGaps.missingThree },
-            { label: "All 4 requirements missing", count: fallbackGaps.missingFour },
-          ]),
       { label: "Incomplete data", count: fallbackGaps.incomplete },
     ];
     const max = Math.max(...rows.map((row) => row.count), 1);
@@ -79,6 +79,21 @@ export function GapPanel({
 
   const tableRows: TableRowDef[] = [
     {
+      label: "All 4 requirements not met",
+      getVal: (c) =>
+        c.planExcluded || !c.officersEvaluated
+          ? { text: "—", title: "Only 3 requirements are evaluated for this cycle." }
+          : { value: c.gaps.missingFour },
+    },
+    {
+      label: "3 requirements not met",
+      getVal: (c) => ({ value: c.gaps.missingThree }),
+    },
+    {
+      label: "2 requirements not met",
+      getVal: (c) => ({ value: c.gaps.missingTwo }),
+    },
+    {
       label: "Under 12 members",
       getVal: (c) => ({ value: c.gaps.onlyMembers }),
     },
@@ -101,24 +116,20 @@ export function GapPanel({
           : { value: c.gaps.onlyPlan },
     },
     {
-      label: "2 requirements missing",
-      getVal: (c) => ({ value: c.gaps.missingTwo }),
-    },
-    {
-      label: "3 requirements missing",
-      getVal: (c) => ({ value: c.gaps.missingThree }),
-    },
-    {
-      label: "All 4 requirements missing",
-      getVal: (c) =>
-        c.planExcluded || !c.officersEvaluated
-          ? { text: "—", title: "Only 3 requirements are evaluated for this cycle." }
-          : { value: c.gaps.missingFour },
-    },
-    {
       label: "Incomplete data",
       getVal: (c) => ({ value: c.gaps.incomplete }),
     },
+    ...(cycles.some((c) => (c.gaps.notEstablished ?? 0) > 0)
+      ? [
+          {
+            label: "Not established yet",
+            getVal: (c: CycleGapSummary) =>
+              (c.gaps.notEstablished ?? 0) > 0
+                ? { value: c.gaps.notEstablished ?? 0 }
+                : { text: "—", title: "All branches on roster were established for this cycle." },
+          },
+        ]
+      : []),
   ];
 
   // Maximum value per cycle for mini progress bars

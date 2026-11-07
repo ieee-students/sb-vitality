@@ -54,14 +54,14 @@ Formulas, thresholds, and the meaning of blank cells are specified in [calculati
 At a glance, for the current scope:
 
 - Student members, with the change versus the previous 31 December snapshot.
-- Student branches, as a current roster, with counts of branches without an officer report, branches without a counselor, branches without a chair, and no invented growth.
+- Student branches, as a current roster, with counts of branches without an officer report, branches without a counselor, branches without a chair, and active branch growth versus the previous 31 December snapshot.
 - Reported events for the open activity year. When that year is not locked, the figure is labeled year to date. Unreported events sit beside it and are outside the total.
-- Branches in good standing for the open cycle, with the rates for the two completed cycles.
+- Branches in good standing for the open cycle, with the rates for completed cycles evaluated against the active units in each cycle.
 - Student-branch rebate expected versus foregone, and the separate section student portion, when approximate rebate information is shown.
 
 Charts show December membership snapshots plus the current headcount, and reported events for each events column. A year-to-date bar is labeled as such.
 
-A gap breakdown compares why branches miss good standing across available rebate cycles (the open cycle and completed cycles): clear single-requirement rows for branches meeting every other requirement (under 12 members, fewer than 4 events, no reported officers, and annual plan not submitted), multi-gap counts broken down by number of missing requirements (2 requirements missing, 3 requirements missing, all 4 requirements missing), and incomplete data. Historical cycles evaluate members, events, and plan without historical officer data.
+A gap breakdown compares why branches miss good standing across available rebate cycles (the open cycle and completed cycles): multi-gap counts ordered by intervention severity (all 4 requirements not met, 3 requirements not met, 2 requirements not met), followed by single-requirement rows for branches meeting every other requirement (under 12 members, fewer than 4 events, no reported officers, and annual plan not submitted), and incomplete data. Historical cycles evaluate members, events, and plan without historical officer data.
 
 Below the primary tables, a follow-up actions panel combines **Dissolution risk** with **Where to act** when approximate rebate information is on, or shows **Dissolution risk** on its own when approximate rebate information is off. Each follow-up list shows up to 10 entries at a time and scrolls vertically through every matching branch or section, linking each entry to its section or branch row. **Where to act** ranks sections, or schools on a section page, with foregone branch rebate from largest to smallest. Dissolution risk is not affected by the annual-plan checkbox or the rebate checkbox.
 
@@ -99,7 +99,7 @@ Local development uses the same base path: `http://localhost:5173/sb-vitality/`.
 
 - A multi-region file opens an MGA view. A single-region file cannot open another region. A single-section file cannot open another section.
 - `R0` displays as Region 10.
-- Blank numeric cells do not become zero, and they do not become a failed year by themselves.
+- Blank member cells do not become zero, and they do not become a failed year by themselves (preventing newly chartered or reactivated branches from accumulating false dissolution warnings for cycles predating their establishment). Blank event cells are treated as 0 reported events (reflecting branches with no event records in the reporting system).
 - The plan checkbox changes only the open cycle, including good standing, gaps, and branch rebate. Dissolution tiers stay put.
 - Unreported events are visible and are not part of the event minimum.
 - **Show approximate rebate information** defaults to off and is kept in this browser. While it is off, no dollar amounts are shown. While it is on, branch rebate and the section student portion are shown as different amounts.
