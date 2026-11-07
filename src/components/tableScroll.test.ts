@@ -256,5 +256,105 @@ describe("10-row scrollable tables with headers and totals", () => {
       "2025 vitality",
     ]);
     expect(branchHtml).toContain("N/A");
+
+    const branchWithSectionHtml = renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        null,
+        createElement(BranchTable, {
+          rows: branchRows(evaluations, workbook.cycles, false),
+          caption: "Region student branches",
+          sort: DEFAULT_BRANCH_SORT,
+          onSort: () => {},
+          emptyMessage: "No schools",
+          showRebate: true,
+          showSection: true,
+        }),
+      ),
+    );
+    expect(firstRowHeaders(branchWithSectionHtml)[0]).toBe("School");
+    expect(firstRowHeaders(branchWithSectionHtml)[1]).toBe("Section");
+    expect(branchWithSectionHtml).toContain('href="/r10/harbor-section"');
+
+    const branchWithRegionAndSectionHtml = renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        null,
+        createElement(BranchTable, {
+          rows: branchRows(evaluations, workbook.cycles, false),
+          caption: "All student branches",
+          sort: DEFAULT_BRANCH_SORT,
+          onSort: () => {},
+          emptyMessage: "No schools",
+          showRebate: true,
+          showRegion: true,
+          showSection: true,
+        }),
+      ),
+    );
+    expect(firstRowHeaders(branchWithRegionAndSectionHtml)[0]).toBe("School");
+    expect(firstRowHeaders(branchWithRegionAndSectionHtml)[1]).toBe("Region");
+    expect(firstRowHeaders(branchWithRegionAndSectionHtml)[2]).toBe("Section");
+    expect(branchWithRegionAndSectionHtml).toContain('href="/r10"');
+    expect(branchWithRegionAndSectionHtml).toContain('href="/r10/harbor-section"');
+  });
+
+  it("virtualizes large BranchTable datasets while keeping accurate totals in tfoot", () => {
+    const baseRows = branchRows(evaluations, workbook.cycles, false);
+    // Create 60 rows (> 40 threshold)
+    const largeRows = Array.from({ length: 60 }, (_, idx) => ({
+      ...baseRows[idx % baseRows.length],
+      id: `row-${idx}`,
+      anchor: `sb-${idx}`,
+      schoolName: `School ${idx + 1}`,
+    }));
+
+    const html = renderToStaticMarkup(
+      createElement(BranchTable, {
+        rows: largeRows,
+        caption: "Large branch roster",
+        sort: DEFAULT_BRANCH_SORT,
+        onSort: () => {},
+        emptyMessage: "No schools",
+        showRebate: true,
+      }),
+    );
+
+    expect(html).toContain("table-scroll-capped");
+    expect(html).toContain("60 SBs");
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain("padding:0;border:0;background:transparent");
+  });
+
+  it("virtualizes large SummaryTable datasets while keeping accurate totals in tfoot", () => {
+    const baseSections = summaryRows(evaluations, "section", false);
+    const largeSections = Array.from({ length: 50 }, (_, idx) => ({
+      ...baseSections[idx % baseSections.length],
+      id: `section-${idx}`,
+      name: `Section ${idx + 1}`,
+    }));
+
+    const html = renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        null,
+        createElement(SummaryTable, {
+          kind: "section",
+          rows: largeSections,
+          standingColumns,
+          caption: "Large section list",
+          sort: DEFAULT_SUMMARY_SORT,
+          onSort: () => {},
+          emptyMessage: "None",
+          showRegion: true,
+          showRebate: false,
+        }),
+      ),
+    );
+
+    expect(html).toContain("table-scroll-capped");
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain("padding:0;border:0;background:transparent");
+    expect(html).toContain("Total");
   });
 });

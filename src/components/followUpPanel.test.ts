@@ -71,15 +71,19 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
       "Why branches miss 2027",
       "Regions",
       "Sections",
+      "Student branches",
       "Follow-up actions",
       "Rebate at the current headcount",
     ]);
+    expect(mgaWithRebate).toContain('placeholder="Search sections or region"');
+    expect(mgaWithRebate).toContain('Search schools, SPOID, section, or region');
 
     const regionWithRebate = renderBody(regionView, true);
     expect(panelHeadings(regionWithRebate)).toEqual([
       "Three-year picture",
       "Why branches miss 2027",
-      "Vitality status",
+      "Sections",
+      "Student branches",
       "Follow-up actions",
       "Rebate at the current headcount",
     ]);
@@ -99,6 +103,16 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
       "Why branches miss 2027",
       "Regions",
       "Sections",
+      "Student branches",
+      "Dissolution risk",
+    ]);
+
+    const regionWithoutRebate = renderBody(regionView, false);
+    expect(panelHeadings(regionWithoutRebate)).toEqual([
+      "Three-year picture",
+      "Why branches miss 2027",
+      "Sections",
+      "Student branches",
       "Dissolution risk",
     ]);
     expect(mgaWithoutRebate).not.toContain("$");
@@ -145,6 +159,21 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
       ),
     );
     expect(sectionHtml).toContain('href="#branch-stb90004"');
+
+    const regionHtml = renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        null,
+        createElement(FollowUpPanel, {
+          counts,
+          urgent,
+          acts: whereToAct(evaluations, "region"),
+          level: "region",
+          showRebate: true,
+        }),
+      ),
+    );
+    expect(regionHtml).toContain('href="#branch-stb90004"');
   });
 
   it("renders all items and caps vertical height at 10 with scrolling when more than 10 items exist", () => {

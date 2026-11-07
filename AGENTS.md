@@ -31,6 +31,8 @@ When a formula changes, update the calculations document, `src/domain/`, and the
 - Branch rebate and the section's $3 student portion are different amounts. Do not add them together.
 - The Vite base is `/sb-vitality/` in dev and production. Use `import.meta.env.BASE_URL` for assets. Router paths omit that prefix.
 - Deep links depend on the script in `index.html` and on `public/404.html`.
+- Section search and student-branch search are independent inputs and filter only their respective tables.
+- Tables with >40 rows use row virtualization (`useVirtualRows`) for DOM performance so full MGA exports (3,900+ rows) render smoothly without main-thread freezes.
 
 ## Commands
 

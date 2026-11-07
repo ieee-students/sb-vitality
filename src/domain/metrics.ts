@@ -400,6 +400,7 @@ export function summaryRows(
       foregone,
       immediate: items.filter((item) => isImmediate(item.dissolution.tier)).length,
       attention: items.filter((item) => needsAttention(item.open.standing)).length,
+      searchText: `${kind === "region" ? first.regionLabel : first.sectionName} ${first.regionLabel}`.toLowerCase(),
     };
   });
 }
@@ -430,6 +431,11 @@ export function branchRows(
       id: `${branch.regionCode}/${branch.sectionSlug}/${branch.spoid}/${branch.schoolName}`,
       anchor: anchorFor(branch),
       schoolName: branch.schoolName,
+      regionCode: branch.regionCode,
+      regionLabel: branch.regionLabel,
+      sectionName: branch.sectionName,
+      sectionSlug: branch.sectionSlug,
+      sectionHref: sectionPath(branch.regionCode, branch.sectionSlug),
       spoid: branch.spoid,
       sourceStatus: branch.sourceStatus || "—",
       currentMembers: branch.currentMembers,
@@ -489,6 +495,7 @@ export function branchRows(
       foregone: evaluation.open.foregoneRebate,
       riskRank: RISK_RANK[evaluation.dissolution.tier],
       attention: needsAttention(evaluation.open.standing) ? 1 : 0,
+      searchText: `${branch.schoolName} ${branch.spoid} ${branch.sectionName} ${branch.regionLabel} ${branch.regionCode}`.toLowerCase(),
     };
   });
 }
@@ -533,8 +540,10 @@ export function whereToAct(evaluations: BranchEvaluation[], level: ScopeLevel): 
     .sort((left, right) => right.foregone - left.foregone || compareText(left.title, right.title));
 }
 
+const collator = new Intl.Collator("en", { sensitivity: "base", numeric: true });
+
 function compareText(left: string, right: string): number {
-  return left.localeCompare(right, "en", { sensitivity: "base", numeric: true });
+  return collator.compare(left, right);
 }
 
 function compareNullable(left: number | null, right: number | null, direction: SortState["direction"]): number {
@@ -619,12 +628,6 @@ export function summaryTotals(rows: SummaryRow[]): SummaryTotals {
   return totals;
 }
 
-function sumNullable(values: (number | null)[]): number | null {
-  if (values.length === 0) return null;
-  const summed = sumKnown(values);
-  return summed.missing === values.length ? null : summed.sum;
-}
-
 export interface BranchCycleTotals {
   rebateYear: number;
   kind: "open" | "complete";
@@ -660,51 +663,163 @@ export interface BranchTotals {
 
 export function branchTotals(rows: BranchRow[]): BranchTotals {
   const sample = rows[0];
+  if (!sample || rows.length === 0) {
+    return {
+      branches: 0,
+      currentMembers: null,
+      snapshots: [],
+      events: [],
+      unreported: null,
+      plans: [],
+      cycles: [],
+      withOfficers: 0,
+      withCounselor: 0,
+      standings: [],
+      immediate: 0,
+      expected: null,
+      foregone: null,
+    };
+  }
+
+  const numCycles = sample.cycles.length;
+  const numSnapshots = sample.snapshots.length;
+  const numEvents = sample.events.length;
+  const numPlans = sample.plans.length;
+  const numStandings = sample.standings.length;
+
+  let currentMembersSum = 0;
+  let currentMembersMissing = 0;
+  let unreportedSum = 0;
+  let unreportedMissing = 0;
+  let withOfficers = 0;
+  let withCounselor = 0;
+  let immediate = 0;
+  let expectedSum = 0;
+  let expectedMissing = 0;
+  let foregoneSum = 0;
+  let foregoneMissing = 0;
+
+  const snapshotSums = new Array<number>(numSnapshots).fill(0);
+  const snapshotMissing = new Array<number>(numSnapshots).fill(0);
+  const eventSums = new Array<number>(numEvents).fill(0);
+  const eventMissing = new Array<number>(numEvents).fill(0);
+  const planYes = new Array<number>(numPlans).fill(0);
+  const standingGood = new Array<number>(numStandings).fill(0);
+
+  const cycleMembersSum = new Array<number>(numCycles).fill(0);
+  const cycleMembersMissing = new Array<number>(numCycles).fill(0);
+  const cycleEventsSum = new Array<number>(numCycles).fill(0);
+  const cycleEventsMissing = new Array<number>(numCycles).fill(0);
+  const cycleUnreportedSum = new Array<number>(numCycles).fill(0);
+  const cycleUnreportedMissing = new Array<number>(numCycles).fill(0);
+  const cyclePlanYes = new Array<number>(numCycles).fill(0);
+  const cycleStandingGood = new Array<number>(numCycles).fill(0);
+
+  const len = rows.length;
+  for (let i = 0; i < len; i++) {
+    const row = rows[i];
+    if (row.currentMembers == null) currentMembersMissing++;
+    else currentMembersSum += row.currentMembers;
+
+    if (row.unreported == null) unreportedMissing++;
+    else unreportedSum += row.unreported;
+
+    if (row.hasReportedOfficers) withOfficers++;
+    if (row.hasCounselor) withCounselor++;
+    if (isImmediate(row.dissolution)) immediate++;
+
+    if (row.expected == null) expectedMissing++;
+    else expectedSum += row.expected;
+
+    if (row.foregone == null) foregoneMissing++;
+    else foregoneSum += row.foregone;
+
+    for (let s = 0; s < numSnapshots; s++) {
+      const v = row.snapshots[s]?.value;
+      if (v == null) snapshotMissing[s]++;
+      else snapshotSums[s] += v;
+    }
+
+    for (let e = 0; e < numEvents; e++) {
+      const v = row.events[e]?.value;
+      if (v == null) eventMissing[e]++;
+      else eventSums[e] += v;
+    }
+
+    for (let p = 0; p < numPlans; p++) {
+      if (row.plans[p]?.value === "yes") planYes[p]++;
+    }
+
+    for (let st = 0; st < numStandings; st++) {
+      if (row.standings[st]?.value === "good") standingGood[st]++;
+    }
+
+    for (let c = 0; c < numCycles; c++) {
+      const cycle = row.cycles[c];
+      if (!cycle) continue;
+      if (cycle.members == null) cycleMembersMissing[c]++;
+      else cycleMembersSum[c] += cycle.members;
+
+      if (cycle.events == null) cycleEventsMissing[c]++;
+      else cycleEventsSum[c] += cycle.events;
+
+      if (cycle.showUnreported) {
+        if (cycle.unreported == null) cycleUnreportedMissing[c]++;
+        else cycleUnreportedSum[c] += cycle.unreported;
+      }
+
+      if (cycle.plan === "yes") cyclePlanYes[c]++;
+      if (cycle.standing === "good") cycleStandingGood[c]++;
+    }
+  }
+
+  const resolveSum = (sum: number, missing: number) => (missing === len ? null : sum);
+
   return {
-    branches: rows.length,
-    currentMembers: sumNullable(rows.map((row) => row.currentMembers)),
-    snapshots: (sample?.snapshots ?? []).map((item, index) => ({
+    branches: len,
+    currentMembers: resolveSum(currentMembersSum, currentMembersMissing),
+    snapshots: sample.snapshots.map((item, idx) => ({
       label: item.label,
-      value: sumNullable(rows.map((row) => row.snapshots[index]?.value ?? null)),
+      value: resolveSum(snapshotSums[idx], snapshotMissing[idx]),
     })),
-    events: (sample?.events ?? []).map((item, index) => ({
+    events: sample.events.map((item, idx) => ({
       label: item.label,
-      value: sumNullable(rows.map((row) => row.events[index]?.value ?? null)),
+      value: resolveSum(eventSums[idx], eventMissing[idx]),
     })),
-    unreported: sumNullable(rows.map((row) => row.unreported)),
-    plans: (sample?.plans ?? []).map((item, index) => ({
+    unreported: resolveSum(unreportedSum, unreportedMissing),
+    plans: sample.plans.map((item, idx) => ({
       label: item.label,
-      yes: rows.filter((row) => row.plans[index]?.value === "yes").length,
-      total: rows.length,
+      yes: planYes[idx],
+      total: len,
     })),
-    cycles: (sample?.cycles ?? []).map((item, index) => ({
+    cycles: sample.cycles.map((item, idx) => ({
       rebateYear: item.rebateYear,
       kind: item.kind,
       membersLabel: item.membersLabel,
-      members: sumNullable(rows.map((row) => row.cycles[index]?.members ?? null)),
+      members: resolveSum(cycleMembersSum[idx], cycleMembersMissing[idx]),
       eventsLabel: item.eventsLabel,
-      events: sumNullable(rows.map((row) => row.cycles[index]?.events ?? null)),
+      events: resolveSum(cycleEventsSum[idx], cycleEventsMissing[idx]),
       showUnreported: item.showUnreported,
       unreported: item.showUnreported
-        ? sumNullable(rows.map((row) => row.cycles[index]?.unreported ?? null))
+        ? resolveSum(cycleUnreportedSum[idx], cycleUnreportedMissing[idx])
         : null,
       planLabel: item.planLabel,
-      planYes: rows.filter((row) => row.cycles[index]?.plan === "yes").length,
+      planYes: cyclePlanYes[idx],
       officersAvailable: item.officersAvailable,
       standingLabel: item.standingLabel,
-      standingGood: rows.filter((row) => row.cycles[index]?.standing === "good").length,
-      total: rows.length,
+      standingGood: cycleStandingGood[idx],
+      total: len,
     })),
-    withOfficers: rows.filter((row) => row.hasReportedOfficers).length,
-    withCounselor: rows.filter((row) => row.hasCounselor).length,
-    standings: (sample?.standings ?? []).map((item, index) => ({
+    withOfficers,
+    withCounselor,
+    standings: sample.standings.map((item, idx) => ({
       label: item.label,
-      good: rows.filter((row) => row.standings[index]?.value === "good").length,
-      total: rows.length,
+      good: standingGood[idx],
+      total: len,
     })),
-    immediate: rows.filter((row) => isImmediate(row.dissolution)).length,
-    expected: sumNullable(rows.map((row) => row.expected)),
-    foregone: sumNullable(rows.map((row) => row.foregone)),
+    immediate,
+    expected: resolveSum(expectedSum, expectedMissing),
+    foregone: resolveSum(foregoneSum, foregoneMissing),
   };
 }
 
@@ -775,6 +890,14 @@ function compareBranch(left: BranchRow, right: BranchRow, sort: SortState): numb
       return sort.direction === "asc"
         ? compareText(left.schoolName, right.schoolName)
         : compareText(right.schoolName, left.schoolName);
+    case "region":
+      return sort.direction === "asc"
+        ? compareText(left.regionLabel, right.regionLabel)
+        : compareText(right.regionLabel, left.regionLabel);
+    case "section":
+      return sort.direction === "asc"
+        ? compareText(left.sectionName, right.sectionName)
+        : compareText(right.sectionName, left.sectionName);
     case "members":
       return compareNullable(
         left.cycles[0]?.members ?? left.currentMembers,
@@ -799,21 +922,29 @@ function compareBranch(left: BranchRow, right: BranchRow, sort: SortState): numb
 export function filterSummary(rows: SummaryRow[], query: string): SummaryRow[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return rows;
-  return rows.filter(
-    (row) => row.name.toLowerCase().includes(needle) || row.regionLabel.toLowerCase().includes(needle),
+  return rows.filter((row) =>
+    row.searchText
+      ? row.searchText.includes(needle)
+      : row.name.toLowerCase().includes(needle) || row.regionLabel.toLowerCase().includes(needle),
   );
 }
 
 export function filterBranches(rows: BranchRow[], query: string): BranchRow[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return rows;
-  return rows.filter(
-    (row) => row.schoolName.toLowerCase().includes(needle) || row.spoid.toLowerCase().includes(needle),
+  return rows.filter((row) =>
+    row.searchText
+      ? row.searchText.includes(needle)
+      : row.schoolName.toLowerCase().includes(needle) ||
+        row.spoid.toLowerCase().includes(needle) ||
+        row.sectionName.toLowerCase().includes(needle) ||
+        row.regionLabel.toLowerCase().includes(needle) ||
+        row.regionCode.toLowerCase().includes(needle),
   );
 }
 
 export interface TableSelection {
-  kind: "summary" | "branches";
+  kind: "summary" | "branches" | "region";
   summaryKind: "region" | "section" | null;
   summary: SummaryRow[];
   sections: SummaryRow[];
@@ -827,16 +958,23 @@ export function selectTable(args: {
   cycles: Cycles;
   level: ScopeLevel;
   ignoreOpenPlan: boolean;
-  query: string;
+  query?: string;
+  sectionQuery?: string;
+  branchQuery?: string;
   summarySort: SortState;
   sectionSort: SortState;
   branchSort: SortState;
+  cachedBranchRows?: BranchRow[];
+  cachedSectionRows?: SummaryRow[];
+  cachedRegionRows?: SummaryRow[];
 }): TableSelection {
+  const baseBranches =
+    args.cachedBranchRows ?? branchRows(args.evaluations, args.cycles, args.ignoreOpenPlan);
+  const branchQuery = args.branchQuery ?? args.query ?? "";
+  const sectionQuery = args.sectionQuery ?? args.query ?? "";
+
   if (args.level === "section") {
-    const branches = sortBranches(
-      filterBranches(branchRows(args.evaluations, args.cycles, args.ignoreOpenPlan), args.query),
-      args.branchSort,
-    );
+    const branches = sortBranches(filterBranches(baseBranches, branchQuery), args.branchSort);
     return {
       kind: "branches",
       summaryKind: null,
@@ -849,31 +987,35 @@ export function selectTable(args: {
   }
 
   if (args.level === "mga") {
+    const baseRegions =
+      args.cachedRegionRows ?? summaryRows(args.evaluations, "region", args.ignoreOpenPlan);
+    const baseSections =
+      args.cachedSectionRows ?? summaryRows(args.evaluations, "section", args.ignoreOpenPlan);
     return {
       kind: "summary",
       summaryKind: "region",
-      summary: sortSummary(summaryRows(args.evaluations, "region", args.ignoreOpenPlan), args.summarySort),
-      sections: sortSummary(
-        filterSummary(summaryRows(args.evaluations, "section", args.ignoreOpenPlan), args.query),
-        args.sectionSort,
-      ),
-      branches: [],
+      summary: sortSummary(baseRegions, args.summarySort),
+      sections: sortSummary(filterSummary(baseSections, sectionQuery), args.sectionSort),
+      branches: sortBranches(filterBranches(baseBranches, branchQuery), args.branchSort),
       emptyMessage: "No regions in this file.",
       sectionEmptyMessage: "No sections match that search.",
     };
   }
 
+  const sectionSort =
+    args.sectionSort !== DEFAULT_SUMMARY_SORT ? args.sectionSort : args.summarySort;
+  const baseSections =
+    args.cachedSectionRows ?? summaryRows(args.evaluations, "section", args.ignoreOpenPlan);
+  const sections = sortSummary(baseSections, sectionSort);
+  const branches = sortBranches(filterBranches(baseBranches, branchQuery), args.branchSort);
   return {
-    kind: "summary",
+    kind: "region",
     summaryKind: "section",
-    summary: sortSummary(
-      filterSummary(summaryRows(args.evaluations, "section", args.ignoreOpenPlan), args.query),
-      args.summarySort,
-    ),
-    sections: [],
-    branches: [],
-    emptyMessage: "No sections match that search.",
-    sectionEmptyMessage: "",
+    summary: sections,
+    sections,
+    branches,
+    emptyMessage: "No sections in this region.",
+    sectionEmptyMessage: "No schools match that search.",
   };
 }
 

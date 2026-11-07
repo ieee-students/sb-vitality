@@ -1,9 +1,10 @@
-import { Fragment, useId } from "react";
+import { Fragment, useId, useRef } from "react";
 import { Link } from "react-router-dom";
 import { formatNumber, formatPercent, formatUsd, goodStandingHint, headingLines } from "../domain/format";
 import { summaryTotals } from "../domain/metrics";
 import type { SortState, SummaryRow } from "../domain/types";
 import { TableScroll, VISIBLE_TABLE_ROWS } from "./TableScroll";
+import { useVirtualRows } from "./useVirtualRows";
 
 function ariaSort(sort: SortState, key: string): "ascending" | "descending" | "none" {
   if (sort.key !== key) return "none";
@@ -32,6 +33,7 @@ export function SummaryTable({
   kind?: "region" | "section";
 }) {
   const captionId = useId();
+  const tableRef = useRef<HTMLTableElement>(null);
   const isRegionTable = kind === "region";
   const headerRows = standingColumns.length > 0 ? 2 : 1;
   const columnCount =
@@ -42,6 +44,10 @@ export function SummaryTable({
     standingColumns.length * 2;
   const immediateClass = standingColumns.length > 0 && !showRebate ? "num after-vitality" : "num";
   const totals = rows.length > 0 ? summaryTotals(rows) : null;
+  const { visibleRows, topSpacerHeight, bottomSpacerHeight, firstRowRef } = useVirtualRows({
+    rows,
+    tableRef,
+  });
   const nameLabel = isRegionTable ? "Region" : "Section";
   const sacLabel = isRegionTable ? "Sections with SAC Chair" : "SAC Chair";
   const sacHint = isRegionTable
@@ -82,7 +88,7 @@ export function SummaryTable({
         rowCount={rows.length}
         maxVisibleRows={isRegionTable ? undefined : VISIBLE_TABLE_ROWS}
       >
-      <table className="data-table summary-table" aria-labelledby={captionId}>
+      <table ref={tableRef} className="data-table summary-table" aria-labelledby={captionId}>
         <thead>
           <tr>
             {header("name", nameLabel, "sticky-col")}
@@ -163,39 +169,67 @@ export function SummaryTable({
               <td colSpan={columnCount}>{emptyMessage}</td>
             </tr>
           ) : (
-            rows.map((row) => (
-              <tr key={row.id}>
-                <th scope="row" className="sticky-col">
-                  <Link to={row.href}>{row.name}</Link>
-                </th>
-                {showRegion ? <td>{row.regionLabel}</td> : null}
-                {isRegionTable ? <td className="num">{formatNumber(row.sections)}</td> : null}
-                <td className={isRegionTable ? "num" : undefined}>
-                  {isRegionTable
-                    ? formatNumber(row.sectionsWithSac)
-                    : row.hasSacChair
-                      ? "Yes"
-                      : "No"}
-                </td>
-                <td className={isRegionTable ? "num" : undefined}>
-                  {isRegionTable
-                    ? formatNumber(row.sectionsWithSsr)
-                    : row.hasSsr
-                      ? "Yes"
-                      : "No"}
-                </td>
-                <td className="num">{formatNumber(row.members)}</td>
-                <td className="num">{formatNumber(row.branches)}</td>
-                <td className="num">{formatNumber(row.withOfficers)}</td>
-                <td className="num">{formatNumber(row.withCounselor)}</td>
-                <td className="num">{formatNumber(row.reportedEvents)}</td>
-                {standingCells(row.standings)}
-                {showRebate ? (
-                  <td className={standingColumns.length > 0 ? "num after-vitality" : "num"}>{formatUsd(row.foregone)}</td>
-                ) : null}
-                <td className={immediateClass}>{formatNumber(row.immediate)}</td>
-              </tr>
-            ))
+            <>
+              {topSpacerHeight > 0 ? (
+                <tr key="__top_spacer" style={{ height: `${topSpacerHeight}px` }} aria-hidden="true">
+                  <td
+                    colSpan={columnCount}
+                    style={{
+                      height: `${topSpacerHeight}px`,
+                      padding: 0,
+                      border: 0,
+                      background: "transparent",
+                    }}
+                  />
+                </tr>
+              ) : null}
+              {visibleRows.map((row, index) => (
+                <tr key={row.id} ref={index === 0 ? firstRowRef : undefined}>
+                  <th scope="row" className="sticky-col">
+                    <Link to={row.href}>{row.name}</Link>
+                  </th>
+                  {showRegion ? <td>{row.regionLabel}</td> : null}
+                  {isRegionTable ? <td className="num">{formatNumber(row.sections)}</td> : null}
+                  <td className={isRegionTable ? "num" : undefined}>
+                    {isRegionTable
+                      ? formatNumber(row.sectionsWithSac)
+                      : row.hasSacChair
+                        ? "Yes"
+                        : "No"}
+                  </td>
+                  <td className={isRegionTable ? "num" : undefined}>
+                    {isRegionTable
+                      ? formatNumber(row.sectionsWithSsr)
+                      : row.hasSsr
+                        ? "Yes"
+                        : "No"}
+                  </td>
+                  <td className="num">{formatNumber(row.members)}</td>
+                  <td className="num">{formatNumber(row.branches)}</td>
+                  <td className="num">{formatNumber(row.withOfficers)}</td>
+                  <td className="num">{formatNumber(row.withCounselor)}</td>
+                  <td className="num">{formatNumber(row.reportedEvents)}</td>
+                  {standingCells(row.standings)}
+                  {showRebate ? (
+                    <td className={standingColumns.length > 0 ? "num after-vitality" : "num"}>{formatUsd(row.foregone)}</td>
+                  ) : null}
+                  <td className={immediateClass}>{formatNumber(row.immediate)}</td>
+                </tr>
+              ))}
+              {bottomSpacerHeight > 0 ? (
+                <tr key="__bottom_spacer" style={{ height: `${bottomSpacerHeight}px` }} aria-hidden="true">
+                  <td
+                    colSpan={columnCount}
+                    style={{
+                      height: `${bottomSpacerHeight}px`,
+                      padding: 0,
+                      border: 0,
+                      background: "transparent",
+                    }}
+                  />
+                </tr>
+              ) : null}
+            </>
           )}
         </tbody>
         {totals ? (

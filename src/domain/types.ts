@@ -256,6 +256,7 @@ export interface SummaryRow {
   foregone: number;
   immediate: number;
   attention: number;
+  searchText?: string;
 }
 
 export interface BranchCycleColumns {
@@ -282,6 +283,11 @@ export interface BranchRow {
   id: string;
   anchor: string;
   schoolName: string;
+  regionCode: string;
+  regionLabel: string;
+  sectionName: string;
+  sectionSlug: string;
+  sectionHref: string;
   spoid: string;
   sourceStatus: string;
   currentMembers: number | null;
@@ -311,6 +317,7 @@ export interface BranchRow {
   foregone: number | null;
   riskRank: number;
   attention: number;
+  searchText?: string;
 }
 
 export interface ActItem {
@@ -320,6 +327,7 @@ export interface ActItem {
   href: string;
   foregone: number;
   attention: number;
+  searchText?: string;
 }
 
 export interface Crumb {

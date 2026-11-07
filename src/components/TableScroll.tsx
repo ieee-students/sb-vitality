@@ -45,10 +45,14 @@ export function TableScroll({
         return;
       }
 
+      const dataRows = tbody.querySelectorAll<HTMLTableRowElement>("tr:not([aria-hidden='true'])");
+      if (dataRows.length === 0) return;
+      const count = Math.min(dataRows.length, maxVisibleRows);
+
       const headHeight = thead ? thead.getBoundingClientRect().height : 0;
       const footHeight = tfoot ? tfoot.getBoundingClientRect().height : 0;
-      const firstRowTop = tbody.rows[0].getBoundingClientRect().top;
-      const lastVisibleRowBottom = tbody.rows[maxVisibleRows - 1].getBoundingClientRect().bottom;
+      const firstRowTop = dataRows[0].getBoundingClientRect().top;
+      const lastVisibleRowBottom = dataRows[count - 1].getBoundingClientRect().bottom;
       const rowsHeight = Math.max(0, lastVisibleRowBottom - firstRowTop);
       const horizontalScrollbar = Math.max(0, container.offsetHeight - container.clientHeight);
       const total = Math.ceil(headHeight + rowsHeight + footHeight + horizontalScrollbar);
@@ -74,7 +78,7 @@ export function TableScroll({
       cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [capped, maxVisibleRows, rowCount, children]);
+  }, [capped, maxVisibleRows, rowCount]);
 
   return (
     <div

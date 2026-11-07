@@ -195,143 +195,142 @@ export function FollowUpPanel({
                   <li key={`${item.branch.spoid}-${item.branch.schoolName}`}>
                     <div className="urgent-head">
                       <div className="urgent-title-group">
-                        {level === "section" ? (
-                          <a
-                            href={`#${anchor}`}
-                            className="urgent-link"
-                            onClick={() => onSelectAnchor?.(anchor)}
-                          >
-                            {item.branch.schoolName}
-                          </a>
-                        ) : (
-                          <Link to={sectionHref} className="urgent-link">
-                            {item.branch.schoolName}
-                          </Link>
-                        )}
+                        <a
+                          href={`#${anchor}`}
+                          className="urgent-link"
+                          onClick={() => onSelectAnchor?.(anchor)}
+                        >
+                          {item.branch.schoolName}
+                        </a>
                         <span>
-                          {item.branch.sectionName} · {item.branch.regionLabel}
+                          {level === "section" ? (
+                            item.branch.sectionName
+                          ) : (
+                            <Link to={sectionHref}>{item.branch.sectionName}</Link>
+                          )} · {item.branch.regionLabel}
                         </span>
                       </div>
                       <RiskPill tier={item.dissolution.tier} />
                     </div>
                     <p className="urgent-detail">{item.dissolution.detail}</p>
                   </li>
-                );
+            );
               })}
-            </ul>
-          </FollowUpListScroll>
-          {urgent.length > VISIBLE_FOLLOWUP_ITEMS ? (
-            <p className="followup-scroll-note">
-              Showing {VISIBLE_FOLLOWUP_ITEMS} at a time — scroll to see all {formatNumber(urgent.length)}{" "}
-              branches on the watchlist.
-            </p>
-          ) : null}
-        </>
-      )}
+          </ul>
+        </FollowUpListScroll>
+      {urgent.length > VISIBLE_FOLLOWUP_ITEMS ? (
+        <p className="followup-scroll-note">
+          Showing {VISIBLE_FOLLOWUP_ITEMS} at a time — scroll to see all {formatNumber(urgent.length)}{" "}
+          branches on the watchlist.
+        </p>
+      ) : null}
+    </>
+  )
+}
     </>
   );
 
-  const actBody = (
-    <>
-      <p className="panel-lead">Largest foregone student-branch rebate in this view.</p>
-      {acts.length === 0 ? (
-        <p>No known branch rebate is foregone in this view.</p>
-      ) : (
-        <>
-          <FollowUpListScroll labelId={actTabId} itemCount={acts.length}>
-            <ol className="act-list" role="list">
-              {acts.map((item) => (
-                <li key={item.id}>
-                  {item.href.startsWith("#") ? (
-                    <a
-                      href={item.href}
-                      onClick={() => onSelectAnchor?.(item.href.slice(1))}
-                    >
-                      {item.title}
-                    </a>
-                  ) : (
-                    <Link to={item.href}>{item.title}</Link>
-                  )}
-                  <span>{item.subtitle}</span>
-                  <strong>{formatUsd(item.foregone)}</strong>
-                  <em>
-                    {formatNumber(item.attention)}{" "}
-                    {item.attention === 1 ? "branch" : "branches"} not in good standing
-                  </em>
-                </li>
-              ))}
-            </ol>
-          </FollowUpListScroll>
-          {acts.length > VISIBLE_FOLLOWUP_ITEMS ? (
-            <p className="followup-scroll-note">
-              Showing {VISIBLE_FOLLOWUP_ITEMS} at a time — scroll to see all {formatNumber(acts.length)}{" "}
-              {level === "section" ? "schools" : "sections"}.
-            </p>
-          ) : null}
-        </>
-      )}
-    </>
-  );
+const actBody = (
+  <>
+    <p className="panel-lead">Largest foregone student-branch rebate in this view.</p>
+    {acts.length === 0 ? (
+      <p>No known branch rebate is foregone in this view.</p>
+    ) : (
+      <>
+        <FollowUpListScroll labelId={actTabId} itemCount={acts.length}>
+          <ol className="act-list" role="list">
+            {acts.map((item) => (
+              <li key={item.id}>
+                {item.href.startsWith("#") ? (
+                  <a
+                    href={item.href}
+                    onClick={() => onSelectAnchor?.(item.href.slice(1))}
+                  >
+                    {item.title}
+                  </a>
+                ) : (
+                  <Link to={item.href}>{item.title}</Link>
+                )}
+                <span>{item.subtitle}</span>
+                <strong>{formatUsd(item.foregone)}</strong>
+                <em>
+                  {formatNumber(item.attention)}{" "}
+                  {item.attention === 1 ? "branch" : "branches"} not in good standing
+                </em>
+              </li>
+            ))}
+          </ol>
+        </FollowUpListScroll>
+        {acts.length > VISIBLE_FOLLOWUP_ITEMS ? (
+          <p className="followup-scroll-note">
+            Showing {VISIBLE_FOLLOWUP_ITEMS} at a time — scroll to see all {formatNumber(acts.length)}{" "}
+            {level === "section" ? "schools" : "sections"}.
+          </p>
+        ) : null}
+      </>
+    )}
+  </>
+);
 
-  if (!showRebate) {
-    return (
-      <section className="panel">
-        <h2 id={headingId}>Dissolution risk</h2>
-        {riskBody}
-      </section>
-    );
-  }
-
+if (!showRebate) {
   return (
     <section className="panel">
-      <div className="followup-toolbar">
-        <h2 id={headingId}>Follow-up actions</h2>
-        <div role="tablist" aria-labelledby={headingId} className="followup-tabs">
-          <button
-            ref={riskTabRef}
-            id={riskTabId}
-            type="button"
-            role="tab"
-            className="followup-tab"
-            aria-selected={currentTab === "risk"}
-            aria-controls={riskPanelId}
-            tabIndex={currentTab === "risk" ? 0 : -1}
-            onClick={() => selectTab("risk")}
-            onKeyDown={handleTabKeyDown}
-          >
-            <span>Dissolution risk</span>
-            <span className="sr-only"> (</span>
-            <span className="followup-count">{formatNumber(urgent.length)}</span>
-            <span className="sr-only">)</span>
-          </button>
-          <button
-            ref={actTabRef}
-            id={actTabId}
-            type="button"
-            role="tab"
-            className="followup-tab"
-            aria-selected={currentTab === "act"}
-            aria-controls={actPanelId}
-            tabIndex={currentTab === "act" ? 0 : -1}
-            onClick={() => selectTab("act")}
-            onKeyDown={handleTabKeyDown}
-          >
-            <span>Where to act</span>
-            <span className="sr-only"> (</span>
-            <span className="followup-count">{formatNumber(acts.length)}</span>
-            <span className="sr-only">)</span>
-          </button>
-        </div>
-      </div>
-      {currentTab === "risk" ? (
-        <div role="tabpanel" id={riskPanelId} aria-labelledby={riskTabId}>
-          {riskBody}
-        </div>
-      ) : (
-        <div role="tabpanel" id={actPanelId} aria-labelledby={actTabId}>
-          {actBody}
-        </div>
-      )}
+      <h2 id={headingId}>Dissolution risk</h2>
+      {riskBody}
     </section>
   );
+}
+
+return (
+  <section className="panel">
+    <div className="followup-toolbar">
+      <h2 id={headingId}>Follow-up actions</h2>
+      <div role="tablist" aria-labelledby={headingId} className="followup-tabs">
+        <button
+          ref={riskTabRef}
+          id={riskTabId}
+          type="button"
+          role="tab"
+          className="followup-tab"
+          aria-selected={currentTab === "risk"}
+          aria-controls={riskPanelId}
+          tabIndex={currentTab === "risk" ? 0 : -1}
+          onClick={() => selectTab("risk")}
+          onKeyDown={handleTabKeyDown}
+        >
+          <span>Dissolution risk</span>
+          <span className="sr-only"> (</span>
+          <span className="followup-count">{formatNumber(urgent.length)}</span>
+          <span className="sr-only">)</span>
+        </button>
+        <button
+          ref={actTabRef}
+          id={actTabId}
+          type="button"
+          role="tab"
+          className="followup-tab"
+          aria-selected={currentTab === "act"}
+          aria-controls={actPanelId}
+          tabIndex={currentTab === "act" ? 0 : -1}
+          onClick={() => selectTab("act")}
+          onKeyDown={handleTabKeyDown}
+        >
+          <span>Where to act</span>
+          <span className="sr-only"> (</span>
+          <span className="followup-count">{formatNumber(acts.length)}</span>
+          <span className="sr-only">)</span>
+        </button>
+      </div>
+    </div>
+    {currentTab === "risk" ? (
+      <div role="tabpanel" id={riskPanelId} aria-labelledby={riskTabId}>
+        {riskBody}
+      </div>
+    ) : (
+      <div role="tabpanel" id={actPanelId} aria-labelledby={actTabId}>
+        {actBody}
+      </div>
+    )}
+  </section>
+);
 }

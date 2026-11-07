@@ -152,6 +152,7 @@ describe("sample rollups", () => {
       "St. Mary's Section",
       "Summit Section",
     ]);
+    expect(table.branches).toHaveLength(11);
 
     const search = selectTable({
       evaluations,
@@ -166,6 +167,51 @@ describe("sample rollups", () => {
     expect(search.summaryKind).toBe("region");
     expect(search.summary.map((row) => row.name)).toEqual(["Region 10", "Region 7", "Region 8"]);
     expect(search.sections.map((row) => row.name)).toEqual(["Harbor Section"]);
+    expect(search.branches.map((row) => row.schoolName).sort()).toEqual([
+      "Harbor Polytechnic",
+      "Lumen College",
+      "Westmill Institute, City Campus",
+    ]);
+
+    const sectionSearchOnly = selectTable({
+      evaluations,
+      cycles: workbook.cycles,
+      level: "mga",
+      ignoreOpenPlan: false,
+      sectionQuery: "oasis",
+      branchQuery: "",
+      summarySort: DEFAULT_SUMMARY_SORT,
+      sectionSort: DEFAULT_SUMMARY_SORT,
+      branchSort: DEFAULT_BRANCH_SORT,
+    });
+    expect(sectionSearchOnly.sections.map((row) => row.name)).toEqual(["Oasis Section"]);
+    expect(sectionSearchOnly.branches).toHaveLength(11);
+
+    const branchSearchOnly = selectTable({
+      evaluations,
+      cycles: workbook.cycles,
+      level: "mga",
+      ignoreOpenPlan: false,
+      sectionQuery: "",
+      branchQuery: "Lumen",
+      summarySort: DEFAULT_SUMMARY_SORT,
+      sectionSort: DEFAULT_SUMMARY_SORT,
+      branchSort: DEFAULT_BRANCH_SORT,
+    });
+    expect(branchSearchOnly.sections).toHaveLength(5);
+    expect(branchSearchOnly.branches.map((row) => row.schoolName)).toEqual(["Lumen College"]);
+
+    const byRegion = selectTable({
+      evaluations,
+      cycles: workbook.cycles,
+      level: "mga",
+      ignoreOpenPlan: false,
+      query: "",
+      summarySort: DEFAULT_SUMMARY_SORT,
+      sectionSort: DEFAULT_SUMMARY_SORT,
+      branchSort: { key: "region", direction: "asc" },
+    });
+    expect(byRegion.branches[0].regionLabel).toBe("Region 7");
 
     const byEvents = selectTable({
       evaluations,
@@ -287,6 +333,39 @@ describe("sample rollups", () => {
     ]);
     expect(sections.summary[0].standings[0].planRequired).toBe(false);
     expect(sections.summary[0].standings[1].planRequired).toBe(true);
+    expect(sections.branches).toHaveLength(11);
+
+    const branchesBySection = selectTable({
+      evaluations,
+      cycles: workbook.cycles,
+      level: "region",
+      ignoreOpenPlan: true,
+      query: "",
+      summarySort: DEFAULT_SUMMARY_SORT,
+      sectionSort: DEFAULT_SUMMARY_SORT,
+      branchSort: { key: "section", direction: "asc" },
+    });
+    expect(branchesBySection.branches.map((row) => row.sectionName).slice(0, 3)).toEqual([
+      "Harbor Section",
+      "Harbor Section",
+      "Harbor Section",
+    ]);
+
+    const harborSearch = selectTable({
+      evaluations,
+      cycles: workbook.cycles,
+      level: "region",
+      ignoreOpenPlan: true,
+      query: "Harbor",
+      summarySort: DEFAULT_SUMMARY_SORT,
+      sectionSort: DEFAULT_SUMMARY_SORT,
+      branchSort: DEFAULT_BRANCH_SORT,
+    });
+    expect(harborSearch.branches.map((row) => row.schoolName).sort()).toEqual([
+      "Harbor Polytechnic",
+      "Lumen College",
+      "Westmill Institute, City Campus",
+    ]);
 
     const schools = selectTable({
       evaluations,

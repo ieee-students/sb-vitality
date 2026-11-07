@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useId, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { StatusPill } from "../components/StatusPill";
 import { BarChart } from "../components/Charts";
@@ -15,6 +15,7 @@ import {
   DEFAULT_SUMMARY_SORT,
   defaultSummarySort,
   branchRows,
+  summaryRows,
   buildKpis,
   collectOfficerContacts,
   countGaps,
@@ -41,7 +42,8 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const { regionCode, sectionSlug } = useVitalityRoute();
-  const [query, setQuery] = useState("");
+  const [sectionQuery, setSectionQuery] = useState("");
+  const [branchQuery, setBranchQuery] = useState("");
   const [summarySort, setSummarySort] = useState<SortState>(() =>
     defaultSummarySort(regionCode || sectionSlug ? null : model?.scope.level),
   );
@@ -49,7 +51,8 @@ export function DashboardPage() {
   const [branchSort, setBranchSort] = useState<SortState>(DEFAULT_BRANCH_SORT);
 
   useEffect(() => {
-    setQuery("");
+    setSectionQuery("");
+    setBranchQuery("");
     setSummarySort(defaultSummarySort(regionCode || sectionSlug ? null : model?.scope.level));
     setSectionSort(DEFAULT_SUMMARY_SORT);
     setBranchSort(DEFAULT_BRANCH_SORT);
@@ -114,8 +117,10 @@ export function DashboardPage() {
       view={view}
       ignoreAnnualPlan={ignoreAnnualPlan}
       showRebate={showRebate}
-      query={query}
-      setQuery={setQuery}
+      sectionQuery={sectionQuery}
+      setSectionQuery={setSectionQuery}
+      branchQuery={branchQuery}
+      setBranchQuery={setBranchQuery}
       summarySort={summarySort}
       setSummarySort={setSummarySort}
       sectionSort={sectionSort}
@@ -135,6 +140,10 @@ export function DashboardBody({
   showRebate,
   query,
   setQuery,
+  sectionQuery,
+  setSectionQuery,
+  branchQuery,
+  setBranchQuery,
   summarySort,
   setSummarySort,
   sectionSort,
@@ -148,8 +157,12 @@ export function DashboardBody({
   view: Extract<ReturnType<typeof resolveView>, { status: "ready" }>;
   ignoreAnnualPlan: boolean;
   showRebate: boolean;
-  query: string;
-  setQuery: (value: string) => void;
+  query?: string;
+  setQuery?: (value: string) => void;
+  sectionQuery?: string;
+  setSectionQuery?: (value: string) => void;
+  branchQuery?: string;
+  setBranchQuery?: (value: string) => void;
   summarySort: SortState;
   setSummarySort: (value: SortState) => void;
   sectionSort: SortState;
@@ -159,7 +172,13 @@ export function DashboardBody({
   error: string | null;
   memoryOnly: boolean;
 }) {
-  const searchInputId = useId();
+  const sectionSearchInputId = useId();
+  const branchSearchInputId = useId();
+  const effectiveSectionQuery = sectionQuery !== undefined ? sectionQuery : (query ?? "");
+  const effectiveSetSectionQuery = setSectionQuery ?? setQuery ?? (() => {});
+  const effectiveBranchQuery = branchQuery !== undefined ? branchQuery : (query ?? "");
+  const effectiveSetBranchQuery = setBranchQuery ?? setQuery ?? (() => {});
+
   const evaluations = useMemo(
     () => evaluateAll(view.branches, model.cycles, ignoreAnnualPlan),
     [view.branches, model.cycles, ignoreAnnualPlan],
@@ -184,10 +203,23 @@ export function DashboardBody({
       })) ?? [],
     [evaluations, ignoreAnnualPlan],
   );
-  const branchTemplate = useMemo(
-    () => branchRows(evaluations, model.cycles, ignoreAnnualPlan)[0],
+  const deferredSectionQuery = useDeferredValue(effectiveSectionQuery);
+  const deferredBranchQuery = useDeferredValue(effectiveBranchQuery);
+  const [targetAnchor, setTargetAnchor] = useState<string | null>(null);
+
+  const allBranchRows = useMemo(
+    () => branchRows(evaluations, model.cycles, ignoreAnnualPlan),
     [evaluations, model.cycles, ignoreAnnualPlan],
   );
+  const allSectionRows = useMemo(
+    () => (view.level === "section" ? [] : summaryRows(evaluations, "section", ignoreAnnualPlan)),
+    [evaluations, view.level, ignoreAnnualPlan],
+  );
+  const allRegionRows = useMemo(
+    () => (view.level === "mga" ? summaryRows(evaluations, "region", ignoreAnnualPlan) : []),
+    [evaluations, view.level, ignoreAnnualPlan],
+  );
+  const branchTemplate = allBranchRows[0];
   const table = useMemo(
     () =>
       selectTable({
@@ -195,48 +227,98 @@ export function DashboardBody({
         cycles: model.cycles,
         level: view.level,
         ignoreOpenPlan: ignoreAnnualPlan,
-        query,
+        sectionQuery: deferredSectionQuery,
+        branchQuery: deferredBranchQuery,
         summarySort,
         sectionSort,
         branchSort,
+        cachedBranchRows: allBranchRows,
+        cachedSectionRows: allSectionRows,
+        cachedRegionRows: allRegionRows,
       }),
-    [evaluations, model.cycles, view.level, ignoreAnnualPlan, query, summarySort, sectionSort, branchSort],
+    [
+      evaluations,
+      model.cycles,
+      view.level,
+      ignoreAnnualPlan,
+      deferredSectionQuery,
+      deferredBranchQuery,
+      summarySort,
+      sectionSort,
+      branchSort,
+      allBranchRows,
+      allSectionRows,
+      allRegionRows,
+    ],
   );
 
-  const searchLabel = view.level === "section" ? "Search schools or SPOID" : "Search sections";
-  const searchField = (
+  const sectionSearchField = (
     <search className="table-search">
-      <label className="search" htmlFor={searchInputId}>
-        <span className="sr-only">{searchLabel}</span>
+      <label className="search" htmlFor={sectionSearchInputId}>
+        <span className="sr-only">Search sections or region</span>
         <input
-          id={searchInputId}
+          id={sectionSearchInputId}
           type="search"
-          value={query}
-          placeholder="Search"
-          onChange={(event) => setQuery(event.target.value)}
+          value={effectiveSectionQuery}
+          placeholder="Search sections or region"
+          onChange={(event) => effectiveSetSectionQuery(event.target.value)}
         />
       </label>
-      {query ? (
-        <button type="button" className="button button-quiet" onClick={() => setQuery("")}>
+      {effectiveSectionQuery ? (
+        <button
+          type="button"
+          className="button button-quiet"
+          onClick={() => effectiveSetSectionQuery("")}
+        >
           Clear search
         </button>
       ) : null}
     </search>
   );
-  const tableCaption =
-    table.kind === "branches"
-      ? `${view.title} student branches`
-      : summaryCaption(table.summaryKind === "region" ? "region" : "section", view.title, query);
+
+  const branchSearchLabel =
+    view.level === "section"
+      ? "Search schools or SPOID"
+      : view.level === "region"
+        ? "Search schools, SPOID, or section"
+        : "Search schools, SPOID, section, or region";
+  const branchSearchField = (
+    <search className="table-search">
+      <label className="search" htmlFor={branchSearchInputId}>
+        <span className="sr-only">{branchSearchLabel}</span>
+        <input
+          id={branchSearchInputId}
+          type="search"
+          value={effectiveBranchQuery}
+          placeholder="Search"
+          onChange={(event) => effectiveSetBranchQuery(event.target.value)}
+        />
+      </label>
+      {effectiveBranchQuery ? (
+        <button
+          type="button"
+          className="button button-quiet"
+          onClick={() => effectiveSetBranchQuery("")}
+        >
+          Clear search
+        </button>
+      ) : null}
+    </search>
+  );
+  const branchTableCaption = `${view.title} student branches${
+    effectiveBranchQuery.trim() ? ` · matching “${effectiveBranchQuery.trim()}”` : ""
+  }`;
 
   const handleSelectAnchor = (anchorId: string) => {
+    setTargetAnchor(anchorId);
     const scrollTarget = () => {
       const target = document.getElementById(anchorId);
       if (target && typeof target.scrollIntoView === "function") {
         target.scrollIntoView({ block: "nearest" });
       }
     };
-    if (query) {
-      setQuery("");
+    if (effectiveBranchQuery) {
+      effectiveSetBranchQuery("");
       requestAnimationFrame(scrollTarget);
       return;
     }
@@ -283,7 +365,7 @@ export function DashboardBody({
         </section>
         <GapPanel gaps={gaps} openYear={model.cycles.open.rebateYear} planExcluded={ignoreAnnualPlan} />
       </div>
-      {view.level === "mga" && table.kind === "summary" ? (
+      {view.level === "mga" ? (
         <>
           <section className="panel">
             <div className="table-toolbar">
@@ -306,13 +388,13 @@ export function DashboardBody({
           <section className="panel">
             <div className="table-toolbar">
               <h2>Sections</h2>
-              {searchField}
+              {sectionSearchField}
             </div>
             <SummaryTable
               kind="section"
               rows={table.sections}
               standingColumns={standingColumns}
-              caption={summaryCaption("section", view.title, query)}
+              caption={summaryCaption("section", view.title, effectiveSectionQuery)}
               sort={sectionSort}
               emptyMessage={table.sectionEmptyMessage}
               showRebate={showRebate}
@@ -322,38 +404,99 @@ export function DashboardBody({
               }
             />
           </section>
-        </>
-      ) : (
-        <section className="panel">
-          <div className="table-toolbar">
-            <h2>{table.kind === "branches" ? "Student branches" : "Vitality status"}</h2>
-            {searchField}
-          </div>
-          {table.kind === "branches" ? (
+          <section className="panel">
+            <div className="table-toolbar">
+              <h2>Student branches</h2>
+              {branchSearchField}
+            </div>
             <BranchTable
               rows={table.branches}
               template={branchTemplate}
-              caption={tableCaption}
+              caption={branchTableCaption}
               sort={branchSort}
-              emptyMessage={table.emptyMessage}
+              emptyMessage="No schools match that search."
               showRebate={showRebate}
-              onSort={(key) => setBranchSort(nextSort(branchSort, key, key === "school" || key === "risk" ? "asc" : "desc"))}
+              showRegion
+              showSection
+              targetAnchor={targetAnchor}
+              onSort={(key) =>
+                setBranchSort(
+                  nextSort(
+                    branchSort,
+                    key,
+                    key === "school" || key === "region" || key === "section" || key === "risk"
+                      ? "asc"
+                      : "desc",
+                  ),
+                )
+              }
             />
-          ) : (
+          </section>
+        </>
+      ) : view.level === "region" ? (
+        <>
+          <section className="panel">
+            <div className="table-toolbar">
+              <h2>Sections</h2>
+            </div>
             <SummaryTable
-              kind={table.summaryKind === "region" ? "region" : "section"}
-              rows={table.summary}
+              kind="section"
+              rows={table.sections}
               standingColumns={standingColumns}
-              caption={tableCaption}
-              sort={summarySort}
+              caption={summaryCaption("section", view.title, "")}
+              sort={sectionSort}
               emptyMessage={table.emptyMessage}
               showRebate={showRebate}
               showRegion={false}
               onSort={(key) =>
-                setSummarySort(nextSort(summarySort, key, key === "name" || key === "region" ? "asc" : "desc"))
+                setSectionSort(nextSort(sectionSort, key, key === "name" || key === "region" ? "asc" : "desc"))
               }
             />
-          )}
+          </section>
+          <section className="panel">
+            <div className="table-toolbar">
+              <h2>Student branches</h2>
+              {branchSearchField}
+            </div>
+            <BranchTable
+              rows={table.branches}
+              template={branchTemplate}
+              caption={branchTableCaption}
+              sort={branchSort}
+              emptyMessage="No schools match that search."
+              showRebate={showRebate}
+              showSection
+              targetAnchor={targetAnchor}
+              onSort={(key) =>
+                setBranchSort(
+                  nextSort(
+                    branchSort,
+                    key,
+                    key === "school" || key === "section" || key === "risk" ? "asc" : "desc",
+                  ),
+                )
+              }
+            />
+          </section>
+        </>
+      ) : (
+        <section className="panel">
+          <div className="table-toolbar">
+            <h2>Student branches</h2>
+            {branchSearchField}
+          </div>
+          <BranchTable
+            rows={table.branches}
+            template={branchTemplate}
+            caption={branchTableCaption}
+            sort={branchSort}
+            emptyMessage={table.emptyMessage}
+            showRebate={showRebate}
+            targetAnchor={targetAnchor}
+            onSort={(key) =>
+              setBranchSort(nextSort(branchSort, key, key === "school" || key === "risk" ? "asc" : "desc"))
+            }
+          />
         </section>
       )}
       <FollowUpPanel

@@ -1,4 +1,5 @@
-import { Fragment, useId } from "react";
+import { Fragment, useId, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
   counselorHint,
   formatNumber,
@@ -14,6 +15,7 @@ import { branchTotals } from "../domain/metrics";
 import type { BranchRow, SortState } from "../domain/types";
 import { RiskPill, StatusPill } from "./StatusPill";
 import { TableScroll, VISIBLE_TABLE_ROWS } from "./TableScroll";
+import { useVirtualRows } from "./useVirtualRows";
 
 function ariaSort(sort: SortState, key: string): "ascending" | "descending" | "none" {
   if (sort.key !== key) return "none";
@@ -32,6 +34,9 @@ export function BranchTable({
   emptyMessage,
   template,
   showRebate,
+  showRegion = false,
+  showSection = false,
+  targetAnchor,
 }: {
   rows: BranchRow[];
   caption: string;
@@ -40,10 +45,20 @@ export function BranchTable({
   emptyMessage: string;
   template?: BranchRow;
   showRebate: boolean;
+  showRegion?: boolean;
+  showSection?: boolean;
+  targetAnchor?: string | null;
 }) {
   const captionId = useId();
+  const tableRef = useRef<HTMLTableElement>(null);
   const sample = template ?? rows[0];
   const totals = rows.length > 0 ? branchTotals(rows) : null;
+  const { visibleRows, topSpacerHeight, bottomSpacerHeight, firstRowRef } = useVirtualRows({
+    rows,
+    tableRef,
+    targetAnchor,
+    getAnchor: (r) => r.anchor,
+  });
 
   function header(key: string, label: string, className?: string, srSuffix?: string) {
     return (
@@ -66,16 +81,18 @@ export function BranchTable({
       (isOpen && showRebate ? 1 : 0)
     );
   }, 0);
-  const columnCount = 4 + cycleColumnCount;
+  const columnCount = 4 + (showRegion ? 1 : 0) + (showSection ? 1 : 0) + cycleColumnCount;
 
   return (
     <div>
       <p id={captionId} className="table-caption">{caption}</p>
       <TableScroll captionId={captionId} rowCount={rows.length} maxVisibleRows={VISIBLE_TABLE_ROWS}>
-        <table className="data-table branch-table" aria-labelledby={captionId}>
+        <table ref={tableRef} className="data-table branch-table" aria-labelledby={captionId}>
           <thead>
             <tr>
               {header("school", "School", "sticky-col")}
+              {showRegion ? header("region", "Region") : null}
+              {showSection ? header("section", "Section") : null}
               <th scope="col">SPOID</th>
               <th scope="col">Sheet status</th>
               {header("risk", "Dissolution risk")}
@@ -134,83 +151,125 @@ export function BranchTable({
                 <td colSpan={Math.max(columnCount, 1)}>{emptyMessage}</td>
               </tr>
             ) : (
-              rows.map((row) => {
-                const currentOfficersHint = officersHint(
-                  row.officerCount,
-                  row.missingOfficers,
-                  row.hasCounselor,
-                  row.hasChair,
-                );
-                return (
-                  <tr key={row.id} id={row.anchor}>
-                    <th scope="row" className="sticky-col">{row.schoolName}</th>
-                    <td>{row.spoid || "—"}</td>
-                    <td>{row.sourceStatus}</td>
-                    <td>
-                      <RiskPill tier={row.dissolution} />
-                      <span className="sr-only">. {row.dissolutionDetail}</span>
-                    </td>
-                    {row.cycles.map((cycleCol) => {
-                      const isOpen = cycleCol.kind === "open";
-                      const naOfficersHint = historicalOfficersHint(
-                        cycleCol.rebateYear,
-                        cycleCol.membersLabel,
-                        cycleCol.eventYear,
-                      );
-                      return (
-                        <Fragment key={cycleCol.rebateYear}>
-                          <td className="num year-start">{cell(cycleCol.members)}</td>
-                          <td className="num">{cell(cycleCol.events)}</td>
-                          {cycleCol.showUnreported ? (
-                            <td className="num">{cell(cycleCol.unreported)}</td>
-                          ) : null}
-                          <td>{planLabel(cycleCol.plan)}</td>
-                          {cycleCol.officersAvailable ? (
-                            <td className="num" title={currentOfficersHint}>
-                              {!row.hasReportedOfficers ? (
-                                <span className="badge-danger">None (0/{row.officerTotal})</span>
-                              ) : (
-                                <span className="officer-cell">
-                                  ({row.officerCount}/{row.officerTotal})
-                                  {!row.hasChair ? (
-                                    <span
-                                      className="tag-warning"
-                                      title="Chair not reported (recommended at all times)"
-                                    >
-                                      No Chair
-                                    </span>
-                                  ) : null}
-                                </span>
-                              )}
-                              <span className="sr-only">. {currentOfficersHint}</span>
-                            </td>
-                          ) : (
-                            <td className="num na-cell" title={naOfficersHint}>
-                              N/A
-                              <span className="sr-only">. {naOfficersHint}</span>
-                            </td>
-                          )}
-                          {isOpen ? (
-                            <td>
-                              <span
-                                className={row.hasCounselor ? "counselor-yes" : "tag-warning"}
-                                title={counselorHint(row.hasCounselor)}
-                              >
-                                {row.hasCounselor ? "Yes" : "Missing"}
-                              </span>
-                              <span className="sr-only">. {counselorHint(row.hasCounselor)}</span>
-                            </td>
-                          ) : null}
-                          <td>
-                            <StatusPill standing={cycleCol.standing} />
-                          </td>
-                          {isOpen && showRebate ? <td>{row.rebateText}</td> : null}
-                        </Fragment>
-                      );
-                    })}
+              <>
+                {topSpacerHeight > 0 ? (
+                  <tr key="__top_spacer" style={{ height: `${topSpacerHeight}px` }} aria-hidden="true">
+                    <td
+                      colSpan={Math.max(columnCount, 1)}
+                      style={{
+                        height: `${topSpacerHeight}px`,
+                        padding: 0,
+                        border: 0,
+                        background: "transparent",
+                      }}
+                    />
                   </tr>
-                );
-              })
+                ) : null}
+                {visibleRows.map((row, index) => {
+                  const currentOfficersHint = officersHint(
+                    row.officerCount,
+                    row.missingOfficers,
+                    row.hasCounselor,
+                    row.hasChair,
+                  );
+                  return (
+                    <tr
+                      key={row.id}
+                      id={row.anchor}
+                      ref={index === 0 ? firstRowRef : undefined}
+                    >
+                      <th scope="row" className="sticky-col">{row.schoolName}</th>
+                      {showRegion ? (
+                        <td>
+                          <Link to={`/${row.regionCode.toLowerCase()}`}>{row.regionLabel}</Link>
+                        </td>
+                      ) : null}
+                      {showSection ? (
+                        <td>
+                          <Link to={row.sectionHref}>{row.sectionName}</Link>
+                        </td>
+                      ) : null}
+                      <td>{row.spoid || "—"}</td>
+                      <td>{row.sourceStatus}</td>
+                      <td>
+                        <RiskPill tier={row.dissolution} />
+                        <span className="sr-only">. {row.dissolutionDetail}</span>
+                      </td>
+                      {row.cycles.map((cycleCol) => {
+                        const isOpen = cycleCol.kind === "open";
+                        const naOfficersHint = historicalOfficersHint(
+                          cycleCol.rebateYear,
+                          cycleCol.membersLabel,
+                          cycleCol.eventYear,
+                        );
+                        return (
+                          <Fragment key={cycleCol.rebateYear}>
+                            <td className="num year-start">{cell(cycleCol.members)}</td>
+                            <td className="num">{cell(cycleCol.events)}</td>
+                            {cycleCol.showUnreported ? (
+                              <td className="num">{cell(cycleCol.unreported)}</td>
+                            ) : null}
+                            <td>{planLabel(cycleCol.plan)}</td>
+                            {cycleCol.officersAvailable ? (
+                              <td className="num" title={currentOfficersHint}>
+                                {!row.hasReportedOfficers ? (
+                                  <span className="badge-danger">None (0/{row.officerTotal})</span>
+                                ) : (
+                                  <span className="officer-cell">
+                                    ({row.officerCount}/{row.officerTotal})
+                                    {!row.hasChair ? (
+                                      <span
+                                        className="tag-warning"
+                                        title="Chair not reported (recommended at all times)"
+                                      >
+                                        No Chair
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                )}
+                                <span className="sr-only">. {currentOfficersHint}</span>
+                              </td>
+                            ) : (
+                              <td className="num na-cell" title={naOfficersHint}>
+                                N/A
+                                <span className="sr-only">. {naOfficersHint}</span>
+                              </td>
+                            )}
+                            {isOpen ? (
+                              <td>
+                                <span
+                                  className={row.hasCounselor ? "counselor-yes" : "tag-warning"}
+                                  title={counselorHint(row.hasCounselor)}
+                                >
+                                  {row.hasCounselor ? "Yes" : "Missing"}
+                                </span>
+                                <span className="sr-only">. {counselorHint(row.hasCounselor)}</span>
+                              </td>
+                            ) : null}
+                            <td>
+                              <StatusPill standing={cycleCol.standing} />
+                            </td>
+                            {isOpen && showRebate ? <td>{row.rebateText}</td> : null}
+                          </Fragment>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+                {bottomSpacerHeight > 0 ? (
+                  <tr key="__bottom_spacer" style={{ height: `${bottomSpacerHeight}px` }} aria-hidden="true">
+                    <td
+                      colSpan={Math.max(columnCount, 1)}
+                      style={{
+                        height: `${bottomSpacerHeight}px`,
+                        padding: 0,
+                        border: 0,
+                        background: "transparent",
+                      }}
+                    />
+                  </tr>
+                ) : null}
+              </>
             )}
           </tbody>
           {totals ? (
@@ -220,6 +279,8 @@ export function BranchTable({
                   Total
                   <span className="sr-only"> of the listed rows</span>
                 </th>
+                {showRegion ? <td></td> : null}
+                {showSection ? <td></td> : null}
                 <td>
                   {formatNumber(totals.branches)} {totals.branches === 1 ? "SB" : "SBs"}
                 </td>
