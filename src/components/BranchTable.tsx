@@ -53,7 +53,7 @@ export function BranchTable({
   const tableRef = useRef<HTMLTableElement>(null);
   const sample = template ?? rows[0];
   const totals = rows.length > 0 ? branchTotals(rows) : null;
-  const { visibleRows, topSpacerHeight, bottomSpacerHeight, firstRowRef } = useVirtualRows({
+  const { visibleRows, startIndex, topSpacerHeight, bottomSpacerHeight, firstRowRef } = useVirtualRows({
     rows,
     tableRef,
     targetAnchor,
@@ -176,7 +176,7 @@ export function BranchTable({
                     <tr
                       key={row.id}
                       id={row.anchor}
-                      ref={index === 0 ? firstRowRef : undefined}
+                      ref={startIndex === 0 && index === 0 ? firstRowRef : undefined}
                     >
                       <th scope="row" className="sticky-col">{row.schoolName}</th>
                       {showRegion ? (

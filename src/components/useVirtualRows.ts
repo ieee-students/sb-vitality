@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefCallback } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefCallback } from "react";
 
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
@@ -35,15 +35,43 @@ export function useVirtualRows<T>({
   const [viewportHeight, setViewportHeight] = useState(600);
   const [measuredRowHeight, setMeasuredRowHeight] = useState(defaultRowHeight);
   const rowHeightRef = useRef(defaultRowHeight);
+  const hasMeasuredRef = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
 
-  const firstRowRef: RefCallback<HTMLTableRowElement> = (node) => {
-    if (!node || !isVirtualized) return;
-    const height = node.getBoundingClientRect().height;
+  const rowHeight = measuredRowHeight || rowHeightRef.current;
+  const visibleCount = Math.ceil(viewportHeight / rowHeight);
+  const startIndex = isVirtualized ? Math.max(0, Math.floor(scrollTop / rowHeight) - overscan) : 0;
+  const endIndex = isVirtualized ? Math.min(rows.length, startIndex + visibleCount + overscan * 2) : rows.length;
+  const visibleRows = isVirtualized ? rows.slice(startIndex, endIndex) : rows;
+  const topSpacerHeight = isVirtualized ? startIndex * rowHeight : 0;
+  const bottomSpacerHeight = isVirtualized ? Math.max(0, (rows.length - endIndex) * rowHeight) : 0;
+
+  const startIndexRef = useRef(0);
+  startIndexRef.current = startIndex;
+
+  const firstRowRef: RefCallback<HTMLTableRowElement> = useCallback((node) => {
+    if (!node || !isVirtualized || hasMeasuredRef.current) return;
+    if (startIndexRef.current !== 0) return;
+    const height = Math.round(node.getBoundingClientRect().height);
     if (height > 20 && Math.abs(height - rowHeightRef.current) > 2) {
+      hasMeasuredRef.current = true;
       rowHeightRef.current = height;
-      setMeasuredRowHeight(height);
+      if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = requestAnimationFrame(() => {
+        setMeasuredRowHeight(height);
+      });
     }
-  };
+  }, [isVirtualized]);
+
+  useEffect(() => {
+    hasMeasuredRef.current = false;
+  }, [rows]);
+
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current != null) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, []);
 
   useIsomorphicLayoutEffect(() => {
     if (!isVirtualized) {
@@ -70,6 +98,7 @@ export function useVirtualRows<T>({
       typeof ResizeObserver !== "undefined"
         ? new ResizeObserver(() => {
             setViewportHeight(container.clientHeight || 600);
+            hasMeasuredRef.current = false;
           })
         : null;
     if (observer) observer.observe(container);
@@ -95,27 +124,8 @@ export function useVirtualRows<T>({
     }
   }, [targetAnchor, isVirtualized, rows, getAnchor]);
 
-  if (!isVirtualized) {
-    return {
-      isVirtualized: false,
-      visibleRows: rows,
-      startIndex: 0,
-      topSpacerHeight: 0,
-      bottomSpacerHeight: 0,
-      firstRowRef,
-    };
-  }
-
-  const rowHeight = measuredRowHeight || rowHeightRef.current;
-  const visibleCount = Math.ceil(viewportHeight / rowHeight);
-  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
-  const endIndex = Math.min(rows.length, startIndex + visibleCount + overscan * 2);
-  const visibleRows = rows.slice(startIndex, endIndex);
-  const topSpacerHeight = startIndex * rowHeight;
-  const bottomSpacerHeight = Math.max(0, (rows.length - endIndex) * rowHeight);
-
   return {
-    isVirtualized: true,
+    isVirtualized,
     visibleRows,
     startIndex,
     topSpacerHeight,

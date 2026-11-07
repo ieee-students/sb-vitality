@@ -44,7 +44,7 @@ export function SummaryTable({
     standingColumns.length * 2;
   const immediateClass = standingColumns.length > 0 && !showRebate ? "num after-vitality" : "num";
   const totals = rows.length > 0 ? summaryTotals(rows) : null;
-  const { visibleRows, topSpacerHeight, bottomSpacerHeight, firstRowRef } = useVirtualRows({
+  const { visibleRows, startIndex, topSpacerHeight, bottomSpacerHeight, firstRowRef } = useVirtualRows({
     rows,
     tableRef,
   });
@@ -184,7 +184,7 @@ export function SummaryTable({
                 </tr>
               ) : null}
               {visibleRows.map((row, index) => (
-                <tr key={row.id} ref={index === 0 ? firstRowRef : undefined}>
+                <tr key={row.id} ref={startIndex === 0 && index === 0 ? firstRowRef : undefined}>
                   <th scope="row" className="sticky-col">
                     <Link to={row.href}>{row.name}</Link>
                   </th>
