@@ -83,14 +83,24 @@ A total across regions, sections, or listed student branches divides the summed 
 
 ### Requirement gaps
 
-Gaps describe the open cycle, after the checkbox is applied. Incomplete and good-standing branches are not gaps.
+Gaps describe why branches miss good standing across available cycles (the open cycle and evaluable completed cycles), after the open annual-plan checkbox is applied. Incomplete rows and good-standing branches are tracked separately.
+
+For the open cycle, requirements include members, reported events, reported officers or counselor, and annual plan (unless set aside). For completed cycles, requirements include December snapshot members, reported events, and annual plan (historical officer records are not in the export).
 
 A requirement fails when members are under 12, reported events are under 4, no officer or counselor is reported, or a required plan is not Yes.
 
-- **Members only**, **Events only**, **Officers only**, or **Annual plan only** when that one requirement fails.
-- **More than one requirement** when two or more fail.
+Single-requirement rows indicate that the branch meets all other requirements:
+- **Under 12 members** (meets events, reported officers, and plan if required)
+- **Fewer than 4 events** (meets 12 members, reported officers, and plan if required)
+- **No reported officers** (meets 12 members, 4 events, and plan if required)
+- **Annual plan not submitted** (when the open-cycle plan is required; meets 12 members, 4 events, and reported officers)
 
-The plan gap is absent while the checkbox sets the plan aside.
+When multiple requirements fail:
+- **2 requirements missing**
+- **3 requirements missing** (when 4 requirements are evaluated) or **All 3 requirements missing** (when the annual plan is set aside and 3 requirements are evaluated)
+- **All 4 requirements missing** (when 4 requirements are evaluated)
+
+The annual plan gap is absent while the checkbox sets the plan aside.
 
 ## Dissolution risk
 

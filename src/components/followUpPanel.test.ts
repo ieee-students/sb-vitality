@@ -68,7 +68,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
     const mgaWithRebate = renderBody(mgaView, true);
     expect(panelHeadings(mgaWithRebate)).toEqual([
       "Three-year picture",
-      "Why branches miss 2027",
+      "Why branches miss",
       "Regions",
       "Sections",
       "Student branches",
@@ -81,7 +81,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
     const regionWithRebate = renderBody(regionView, true);
     expect(panelHeadings(regionWithRebate)).toEqual([
       "Three-year picture",
-      "Why branches miss 2027",
+      "Why branches miss",
       "Sections",
       "Student branches",
       "Follow-up actions",
@@ -91,7 +91,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
     const sectionWithRebate = renderBody(sectionView, true);
     expect(panelHeadings(sectionWithRebate)).toEqual([
       "Three-year picture",
-      "Why branches miss 2027",
+      "Why branches miss",
       "Student branches",
       "Follow-up actions",
       "Rebate at the current headcount",
@@ -100,7 +100,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
     const mgaWithoutRebate = renderBody(mgaView, false);
     expect(panelHeadings(mgaWithoutRebate)).toEqual([
       "Three-year picture",
-      "Why branches miss 2027",
+      "Why branches miss",
       "Regions",
       "Sections",
       "Student branches",
@@ -110,7 +110,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
     const regionWithoutRebate = renderBody(regionView, false);
     expect(panelHeadings(regionWithoutRebate)).toEqual([
       "Three-year picture",
-      "Why branches miss 2027",
+      "Why branches miss",
       "Sections",
       "Student branches",
       "Dissolution risk",

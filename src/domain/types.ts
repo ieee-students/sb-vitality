@@ -11,6 +11,9 @@ export type Gap =
   | "only-events"
   | "only-officers"
   | "only-plan"
+  | "two-requirements"
+  | "three-requirements"
+  | "four-requirements"
   | "multiple";
 
 export type DissolutionTier =
@@ -150,6 +153,7 @@ export interface CycleResult {
   events: number | null;
   plan: PlanValue;
   standing: Standing;
+  gap: Gap;
   allowance: number | null;
   expectedRebate: number | null;
   foregoneRebate: number | null;
@@ -224,9 +228,19 @@ export interface GapCounts {
   onlyEvents: number;
   onlyOfficers: number;
   onlyPlan: number;
+  missingTwo: number;
+  missingThree: number;
+  missingFour: number;
   multiple: number;
   incomplete: number;
   good: number;
+}
+
+export interface CycleGapSummary {
+  cycle: Cycle;
+  gaps: GapCounts;
+  planExcluded: boolean;
+  officersEvaluated: boolean;
 }
 
 export interface SummaryRow {

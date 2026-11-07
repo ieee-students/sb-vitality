@@ -124,8 +124,11 @@ describe("requirement gaps", () => {
     expect(requirementGap(input({ hasReportedOfficers: false }))).toBe("only-officers");
     expect(requirementGap(input({ officersCount: 0 }))).toBe("only-officers");
     expect(requirementGap(input({ officersCount: 1 }))).toBe("good");
-    expect(requirementGap(input({ hasReportedOfficers: false, plan: "no" }))).toBe("multiple");
-    expect(requirementGap(input({ members: 4, events: 0, plan: "no" }))).toBe("multiple");
+    expect(requirementGap(input({ hasReportedOfficers: false, plan: "no" }))).toBe("two-requirements");
+    expect(requirementGap(input({ members: 4, events: 0, plan: "no" }))).toBe("three-requirements");
+    expect(
+      requirementGap(input({ members: 4, events: 0, hasReportedOfficers: false, plan: "no" })),
+    ).toBe("four-requirements");
     expect(requirementGap(input({ events: null }))).toBe("incomplete");
     expect(requirementGap(input())).toBe("good");
   });
@@ -138,5 +141,13 @@ describe("requirement gaps", () => {
     expect(requirementGap(input({ events: 0, members: 20, plan: "no", planRequired: false }))).toBe(
       "only-events",
     );
+    expect(requirementGap(input({ events: 0, members: 4, plan: "no", planRequired: false }))).toBe(
+      "two-requirements",
+    );
+    expect(
+      requirementGap(
+        input({ events: 0, members: 4, hasReportedOfficers: false, plan: "no", planRequired: false }),
+      ),
+    ).toBe("three-requirements");
   });
 });

@@ -22,6 +22,7 @@ import type {
   BranchRow,
   ChartPoint,
   Cycle,
+  CycleGapSummary,
   Cycles,
   DissolutionTier,
   GapCounts,
@@ -89,9 +90,18 @@ export function evaluateBranch(
       officersCount: officers.officerCount,
       officersRequired,
     });
+    const gap = requirementGap({
+      members,
+      events,
+      plan,
+      planRequired,
+      hasReportedOfficers: officers.hasReportedOfficers,
+      officersCount: officers.officerCount,
+      officersRequired,
+    });
     const allowance = sbAllowance(members);
     const split = splitRebate(allowance, standing);
-    return { cycle, members, events, plan, standing, allowance, ...split };
+    return { cycle, members, events, plan, standing, gap, allowance, ...split };
   });
   const open = results[0];
   const activity = dissolutionInputs(branch, cycles);
@@ -106,15 +116,7 @@ export function evaluateBranch(
     hasChair: officers.hasChair,
     hasReportedOfficers: officers.hasReportedOfficers,
     hasCoreLeadership: officers.hasCoreLeadership,
-    gap: requirementGap({
-      members: open.members,
-      events: open.events,
-      plan: open.plan,
-      planRequired: cycles.open.kind === "complete" || !ignoreOpenCyclePlan,
-      hasReportedOfficers: officers.hasReportedOfficers,
-      officersCount: officers.officerCount,
-      officersRequired: cycles.open.kind === "open",
-    }),
+    gap: open.gap,
     dissolution: assessDissolution(activity.complete, activity.inProgress),
     sectionPortion: sectionStudentPortion(cycleMembers(branch, cycles.open)),
   };
@@ -270,26 +272,66 @@ export function eventChart(evaluations: BranchEvaluation[], cycles: Cycles): Cha
   });
 }
 
-export function countGaps(evaluations: BranchEvaluation[]): GapCounts {
+export function countCycleGaps(
+  evaluations: BranchEvaluation[],
+  cycleIndex: number,
+): GapCounts {
   const counts: GapCounts = {
     onlyMembers: 0,
     onlyEvents: 0,
     onlyOfficers: 0,
     onlyPlan: 0,
+    missingTwo: 0,
+    missingThree: 0,
+    missingFour: 0,
     multiple: 0,
     incomplete: 0,
     good: 0,
   };
   for (const evaluation of evaluations) {
-    if (evaluation.gap === "only-members") counts.onlyMembers += 1;
-    else if (evaluation.gap === "only-events") counts.onlyEvents += 1;
-    else if (evaluation.gap === "only-officers") counts.onlyOfficers += 1;
-    else if (evaluation.gap === "only-plan") counts.onlyPlan += 1;
-    else if (evaluation.gap === "multiple") counts.multiple += 1;
-    else if (evaluation.gap === "incomplete") counts.incomplete += 1;
-    else counts.good += 1;
+    const cycleResult = evaluation.cycles[cycleIndex];
+    if (!cycleResult) continue;
+    const gap = cycleResult.gap;
+    if (gap === "only-members") counts.onlyMembers += 1;
+    else if (gap === "only-events") counts.onlyEvents += 1;
+    else if (gap === "only-officers") counts.onlyOfficers += 1;
+    else if (gap === "only-plan") counts.onlyPlan += 1;
+    else if (gap === "two-requirements") {
+      counts.missingTwo += 1;
+      counts.multiple += 1;
+    } else if (gap === "three-requirements") {
+      counts.missingThree += 1;
+      counts.multiple += 1;
+    } else if (gap === "four-requirements") {
+      counts.missingFour += 1;
+      counts.multiple += 1;
+    } else if (gap === "multiple") {
+      counts.multiple += 1;
+    } else if (gap === "incomplete") {
+      counts.incomplete += 1;
+    } else {
+      counts.good += 1;
+    }
   }
   return counts;
+}
+
+export function countGaps(evaluations: BranchEvaluation[]): GapCounts {
+  return countCycleGaps(evaluations, 0);
+}
+
+export function allCycleGaps(
+  evaluations: BranchEvaluation[],
+  cycles: Cycles,
+  ignoreOpenPlan: boolean,
+): CycleGapSummary[] {
+  const ordered = [cycles.open, ...cycles.completed];
+  return ordered.map((cycle, index) => ({
+    cycle,
+    gaps: countCycleGaps(evaluations, index),
+    planExcluded: cycle.kind === "open" && ignoreOpenPlan,
+    officersEvaluated: cycle.kind === "open",
+  }));
 }
 
 export function countTiers(evaluations: BranchEvaluation[]): Record<DissolutionTier, number> {

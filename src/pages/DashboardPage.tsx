@@ -14,6 +14,7 @@ import {
   DEFAULT_BRANCH_SORT,
   DEFAULT_SUMMARY_SORT,
   defaultSummarySort,
+  allCycleGaps,
   branchRows,
   summaryRows,
   buildKpis,
@@ -187,6 +188,10 @@ export function DashboardBody({
   const members = useMemo(() => memberChart(evaluations, model.cycles), [evaluations, model.cycles]);
   const events = useMemo(() => eventChart(evaluations, model.cycles), [evaluations, model.cycles]);
   const gaps = useMemo(() => countGaps(evaluations), [evaluations]);
+  const cycleGaps = useMemo(
+    () => allCycleGaps(evaluations, model.cycles, ignoreAnnualPlan),
+    [evaluations, model.cycles, ignoreAnnualPlan],
+  );
   const tiers = useMemo(() => countTiers(evaluations), [evaluations]);
   const urgent = useMemo(() => urgentBranches(evaluations), [evaluations]);
   const acts = useMemo(() => whereToAct(evaluations, view.level), [evaluations, view.level]);
@@ -363,7 +368,12 @@ export function DashboardBody({
             <BarChart title="Reported events" points={events} tone="teal" />
           </div>
         </section>
-        <GapPanel gaps={gaps} openYear={model.cycles.open.rebateYear} planExcluded={ignoreAnnualPlan} />
+        <GapPanel
+          cycleGaps={cycleGaps}
+          gaps={gaps}
+          openYear={model.cycles.open.rebateYear}
+          planExcluded={ignoreAnnualPlan}
+        />
       </div>
       {view.level === "mga" ? (
         <>

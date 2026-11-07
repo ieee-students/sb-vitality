@@ -72,13 +72,19 @@ export function dissolutionLabel(tier: DissolutionTier): string {
 export function gapLabel(gap: Gap): string {
   switch (gap) {
     case "only-members":
-      return "Members only";
+      return "Under 12 members";
     case "only-events":
-      return "Events only";
+      return "Fewer than 4 events";
     case "only-officers":
-      return "Officers only";
+      return "No reported officers";
     case "only-plan":
-      return "Annual plan only";
+      return "Annual plan not submitted";
+    case "two-requirements":
+      return "2 requirements missing";
+    case "three-requirements":
+      return "3 requirements missing";
+    case "four-requirements":
+      return "All 4 requirements missing";
     case "multiple":
       return "More than one requirement";
     case "incomplete":

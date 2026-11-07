@@ -61,7 +61,7 @@ At a glance, for the current scope:
 
 Charts show December membership snapshots plus the current headcount, and reported events for each events column. A year-to-date bar is labeled as such.
 
-A gap breakdown counts open-cycle branches missing only members, only events, only officers, only the annual plan, or more than one requirement.
+A gap breakdown compares why branches miss good standing across available rebate cycles (the open cycle and completed cycles): clear single-requirement rows for branches meeting every other requirement (under 12 members, fewer than 4 events, no reported officers, and annual plan not submitted), multi-gap counts broken down by number of missing requirements (2 requirements missing, 3 requirements missing, all 4 requirements missing), and incomplete data. Historical cycles evaluate members, events, and plan without historical officer data.
 
 Below the primary tables, a follow-up actions panel combines **Dissolution risk** with **Where to act** when approximate rebate information is on, or shows **Dissolution risk** on its own when approximate rebate information is off. Each follow-up list shows up to 10 entries at a time and scrolls vertically through every matching branch or section, linking each entry to its section or branch row. **Where to act** ranks sections, or schools on a section page, with foregone branch rebate from largest to smallest. Dissolution risk is not affected by the annual-plan checkbox or the rebate checkbox.
 

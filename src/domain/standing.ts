@@ -77,7 +77,10 @@ export function requirementGap(input: StandingInput): Gap {
     input.planRequired && input.plan !== "yes" ? "plan" : null,
   ].filter((item): item is "members" | "events" | "officers" | "plan" => item != null);
 
-  if (failures.length > 1) return "multiple";
+  if (failures.length === 2) return "two-requirements";
+  if (failures.length === 3) return "three-requirements";
+  if (failures.length === 4) return "four-requirements";
+  if (failures.length > 4) return "multiple";
   if (failures[0] === "members") return "only-members";
   if (failures[0] === "events") return "only-events";
   if (failures[0] === "officers") return "only-officers";

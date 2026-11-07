@@ -3,6 +3,7 @@ import { MIN_EVENTS, MIN_MEMBERS } from "../config/defaults";
 import {
   branchCycleHeading,
   counselorHint,
+  gapLabel,
   goodStandingHint,
   headingLines,
   historicalOfficersHint,
@@ -86,5 +87,17 @@ describe("good standing hint", () => {
     expect(counselorHint(false)).toBe(
       "No Counselor reported. Maintaining a Counselor at all times is recommended for branch vitality.",
     );
+  });
+
+  it("formats gap labels with clear requirement text and counts", () => {
+    expect(gapLabel("only-members")).toBe("Under 12 members");
+    expect(gapLabel("only-events")).toBe("Fewer than 4 events");
+    expect(gapLabel("only-officers")).toBe("No reported officers");
+    expect(gapLabel("only-plan")).toBe("Annual plan not submitted");
+    expect(gapLabel("two-requirements")).toBe("2 requirements missing");
+    expect(gapLabel("three-requirements")).toBe("3 requirements missing");
+    expect(gapLabel("four-requirements")).toBe("All 4 requirements missing");
+    expect(gapLabel("incomplete")).toBe("Incomplete data");
+    expect(gapLabel("good")).toBe("In good standing");
   });
 });

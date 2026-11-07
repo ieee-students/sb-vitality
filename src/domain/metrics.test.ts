@@ -2,10 +2,12 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  allCycleGaps,
   branchRows,
   branchTotals,
   buildKpis,
   collectOfficerContacts,
+  countCycleGaps,
   countGaps,
   evaluateAll,
   filterBranches,
@@ -128,10 +130,24 @@ describe("sample rollups", () => {
     expect(countGaps(evaluations)).toMatchObject({
       onlyPlan: 1,
       onlyEvents: 1,
+      missingTwo: 1,
+      missingThree: 1,
+      missingFour: 1,
       multiple: 3,
       incomplete: 1,
       good: 5,
     });
+
+    const multiCycleGaps = allCycleGaps(evaluations, workbook.cycles, false);
+    expect(multiCycleGaps).toHaveLength(3);
+    expect(multiCycleGaps[0].cycle.rebateYear).toBe(2027);
+    expect(multiCycleGaps[0].officersEvaluated).toBe(true);
+    expect(multiCycleGaps[1].cycle.rebateYear).toBe(2026);
+    expect(multiCycleGaps[1].officersEvaluated).toBe(false);
+    expect(multiCycleGaps[2].cycle.rebateYear).toBe(2025);
+    expect(multiCycleGaps[2].officersEvaluated).toBe(false);
+    expect(countCycleGaps(evaluations, 1).good).toBe(8);
+    expect(countCycleGaps(evaluations, 2).good).toBe(8);
 
     const table = selectTable({
       evaluations,
