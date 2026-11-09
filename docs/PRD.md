@@ -121,4 +121,4 @@ Do not build these until they are requested. Record them here so later work stay
 
 - [calculations.md](calculations.md)
 - [DESIGN.md](../DESIGN.md)
-- [MGA Operations Manual](https://mga.ieee.org/images/files/Current_MGA_Operations_Manual_2026_20_June_2026.pdf), geographic unit rebate allowances and student branch requirements
+- [MGA Operations Manual](https://mga.ieee.org/board-committees/operations-manual), geographic unit rebate allowances and student branch requirements
