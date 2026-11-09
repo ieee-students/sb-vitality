@@ -127,8 +127,8 @@ describe("10-row scrollable tables with headers and totals", () => {
     expect(elevenHtml).toContain("table-scroll-capped");
     expect(elevenHtml).toContain("<tfoot>");
     expect(elevenHtml).toContain("11 SBs");
-    expect(elevenHtml).toContain("Expected $710");
-    expect(elevenHtml).toContain("Foregone $362");
+    expect(elevenHtml).toContain("Projected $710");
+    expect(elevenHtml).toContain("At risk $362");
 
     const tenHtml = renderToStaticMarkup(
       createElement(BranchTable, {

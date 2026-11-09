@@ -25,6 +25,7 @@ import type {
   ChartPoint,
   Cycle,
   CycleGapSummary,
+  CycleRebateKpi,
   Cycles,
   DissolutionTier,
   Gap,
@@ -268,6 +269,71 @@ export function buildKpis(evaluations: BranchEvaluation[], cycles: Cycles): Kpis
     )
     : null;
 
+  const allCycles = [cycles.open, ...cycles.completed];
+  const cycleRebates: CycleRebateKpi[] = allCycles.map((cycle, idx) => {
+    let cycleExpected = 0;
+    let cycleForegone = 0;
+    let cycleUnknown = 0;
+    let cycleSectionPortion = 0;
+    let cycleSectionPortionMissing = 0;
+    let qualifiedBranches = 0;
+    let unqualifiedBranches = 0;
+    let activeBranches = 0;
+    let memberSum = 0;
+
+    for (const evaluation of evaluations) {
+      const cycleResult = evaluation.cycles[idx];
+      if (!cycleResult) continue;
+
+      const isNotEstablished = cycleResult.standing === "not-established";
+      if (!isNotEstablished) {
+        activeBranches += 1;
+      }
+
+      if (cycleResult.members != null) {
+        memberSum += cycleResult.members;
+        cycleSectionPortion += cycleResult.members * 3;
+      } else {
+        cycleSectionPortionMissing += 1;
+      }
+
+      if (cycleResult.standing === "good") {
+        qualifiedBranches += 1;
+      } else if (cycleResult.standing === "needs-support" || cycleResult.standing === "inactive") {
+        unqualifiedBranches += 1;
+      }
+
+      if (isNotEstablished) {
+        continue;
+      }
+
+      if (cycleResult.expectedRebate == null || cycleResult.foregoneRebate == null) {
+        cycleUnknown += 1;
+      } else {
+        cycleExpected += cycleResult.expectedRebate;
+        cycleForegone += cycleResult.foregoneRebate;
+      }
+    }
+
+    return {
+      rebateYear: cycle.rebateYear,
+      kind: cycle.kind,
+      eventYear: cycle.eventYear,
+      membersLabel: cycleMembersLabel(cycle),
+      expectedRebate: cycleExpected,
+      foregoneRebate: cycleForegone,
+      unknownRebateBranches: cycleUnknown,
+      sectionStudentPortion: cycleSectionPortion,
+      sectionPortionMissing: cycleSectionPortionMissing,
+      qualifiedBranches,
+      unqualifiedBranches,
+      activeBranches,
+      totalBranches: evaluations.length,
+      members: memberSum,
+      officersEvaluated: cycle.kind === "open",
+    };
+  });
+
   return {
     branchCount: evaluations.length,
     branchChange: branchComparison(evaluations, cycles),
@@ -306,6 +372,7 @@ export function buildKpis(evaluations: BranchEvaluation[], cycles: Cycles): Kpis
     sectionStudentPortion: sectionStudentPortionTotal,
     sectionPortionMissing,
     openRebateYear: cycles.open.rebateYear,
+    cycleRebates,
   };
 }
 
@@ -528,8 +595,8 @@ export function summaryRows(
 
 function rebateText(evaluation: BranchEvaluation): string {
   if (evaluation.open.expectedRebate == null || evaluation.open.foregoneRebate == null) return "Unknown";
-  if (evaluation.open.foregoneRebate > 0) return `Foregone ${formatUsd(evaluation.open.foregoneRebate)}`;
-  return `Expected ${formatUsd(evaluation.open.expectedRebate)}`;
+  if (evaluation.open.foregoneRebate > 0) return `At risk ${formatUsd(evaluation.open.foregoneRebate)}`;
+  return `Projected ${formatUsd(evaluation.open.expectedRebate)}`;
 }
 
 function cycleMembersLabel(cycle: Cycle): string {

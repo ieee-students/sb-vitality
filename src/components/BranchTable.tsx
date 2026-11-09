@@ -139,7 +139,14 @@ export function BranchTable({
                         ))}
                       </span>
                     </th>
-                    {isOpen && showRebate ? header("foregone", "Branch rebate") : null}
+                    {isOpen && showRebate
+                      ? header(
+                          "foregone",
+                          "Branch rebate",
+                          undefined,
+                          "Approximate student branch rebate: projected if in good standing, at risk if vitality conditions are unmet.",
+                        )
+                      : null}
                   </Fragment>
                 );
               }) ?? null}
@@ -334,8 +341,8 @@ export function BranchTable({
                             "Unknown"
                           ) : (
                             <span className="stacked-total">
-                              <span>Expected {formatUsd(totals.expected ?? 0)}</span>
-                              <span>Foregone {formatUsd(totals.foregone ?? 0)}</span>
+                              <span>Projected {formatUsd(totals.expected ?? 0)}</span>
+                              <span>At risk {formatUsd(totals.foregone ?? 0)}</span>
                             </span>
                           )}
                         </td>

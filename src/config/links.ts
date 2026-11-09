@@ -4,4 +4,7 @@ export const DASHBOARD_URL =
 export const MANUAL_URL =
   "https://mga.ieee.org/images/files/Current_MGA_Operations_Manual_2026_20_June_2026.pdf";
 
+export const VTOOLS_REBATES_URL =
+  "https://events.vtools.ieee.org/tego_/events/administration/rebates";
+
 export const SITE_URL = "https://ieee-students.github.io/sb-vitality/";

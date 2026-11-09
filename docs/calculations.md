@@ -28,7 +28,7 @@ A blank cell in `Total Members`, `Dec YYYY Members`, or `YYYY Annual Plan` is mi
 
 Membership blanks are never treated as zero. Student branches chartered or reactivated in recent years do not have historical December membership records. Treating blank historical membership counts as zero would falsely register those units as having failed minimum membership requirements in years prior to their establishment, causing spurious delinquency and dissolution warnings. Keeping them as missing (`null`) correctly evaluates them as Incomplete history for those completed cycles, ensuring newly established branches are not penalized for history that predates them.
 
-A blank cell in `YYYY Events` or `YYYY Unreported Events` is treated as 0 reported events. In the reporting system, branches that have never reported events have blank cells rather than zeros; treating them as 0 allows vitality standing, dissolution watchlists, and foregone rebate calculations to evaluate these inactive branches accurately rather than treating them as missing data.
+A blank cell in `YYYY Events` or `YYYY Unreported Events` is treated as 0 reported events. In the reporting system, branches that have never reported events have blank cells rather than zeros; treating them as 0 allows vitality standing, dissolution watchlists, and rebate-at-risk calculations to evaluate these inactive branches accurately rather than treating them as missing data.
 
 `R0` is Region 10. `R10`, `Region 10`, and `10` are the same region. Other numeric region codes stay `R1` through `R9`.
 
@@ -138,17 +138,51 @@ With the current columns the completed years are 2024 and 2025, so the longest s
 
 ## Rebates
 
+All rebate figures displayed in this tool are approximate estimates for planning and advocacy, not official payments or promises of distribution. Official, verified rebate amounts and statements are maintained on IEEE vTools (`https://events.vtools.ieee.org/tego_/events/administration/rebates`).
+
+### Student branch allowance formula
+
 Student-branch allowance at a headcount of M:
 
 - Base **$50** when M is under 50, or **$100** when M is 50 or more.
 - Plus **$2** times M.
-- M is the open cycle's member input. A missing member count has no allowance.
-
-If open-cycle standing is good, the allowance is **expected**. If standing is needs support or inactive, the same allowance is **foregone** at that headcount. Incomplete standing has neither an expected nor a foregone amount. The app does not raise a branch's headcount to 12 to invent a larger rebate.
+- M is the cycle's member input (current headcount or latest December snapshot for the open cycle; December snapshot for completed cycles). A missing member count has no allowance.
 
 Examples: 64 members → $100 + $128 = $228. 20 members → $50 + $40 = $90. 0 members → $50. 49 members → $50 + $98 = $148. 50 members → $100 + $100 = $200.
 
-**Section student portion** is **$3** times the same open-cycle headcount, summed across the branches in view. It is money in the section rebate formula, not the branch rebate. It is not added to expected or foregone branch rebate. It is not reduced when a branch misses good standing. The section still has its own requirements (higher-grade members, meetings, and timeliness). Those inputs are not in this export, so the portion is an advocacy estimate, not a promise that the section is paid.
+### Qualification requirements (all 4 vitality conditions required)
+
+Member count alone is **not** sufficient to receive a rebate. To qualify for a student-branch rebate, a branch must satisfy all **4 vitality conditions**:
+
+1. Minimum **12** student members
+2. Minimum **4** reported events
+3. Reported **officers** (at least one ExCom officer or Counselor)
+4. Submitted **annual plan** (unless set aside by the open-cycle plan checkbox)
+
+If any of these 4 conditions are unmet, the branch does not qualify and its rebate is **$0.00** (matching official MGA rebate statements).
+
+### Terminology: Projected vs Rebate at risk (replacing "Foregone")
+
+- If standing is good, the allowance is **projected** (for the open cycle) or **estimated qualified** (for completed cycles).
+- If standing is needs support or inactive, the allowance is **at risk** (for the open cycle) or **unqualified** (for completed cycles). Incomplete standing has neither a projected nor an at-risk amount.
+- The term **Rebate at risk** (or **At risk**) replaces "Foregone" across tables, follow-up actions, and summary cards. In the open cycle, branches that have not yet qualified still have time to submit their plan, report officers, or log events before final deadlines.
+
+### Three-year cycle overview & historical officer status
+
+The dashboard calculates approximate rebate amounts across all three available cycle years (the open cycle and the two completed cycles):
+
+- **Open cycle**: Evaluates all 4 requirements against current membership, YTD events, reported officers, and the open annual plan.
+- **Completed cycles**: Evaluates historical December membership, historical events, and historical annual plans. Historical officer reporting records are not in the CSV export; qualification assumes officers were reported. Because branches that lacked reported officers received $0.00 in reality, the estimated historical rebate is an upper bound; actual historical distributed amounts were likely lower.
+
+### Distribution process & timeline (Q3 transfer via Sections)
+
+- IEEE calculates and distributes student-branch rebates annually in **Q3** (July–September).
+- IEEE does not transfer funds directly to individual student branches; rather, the total approved student-branch rebate is transferred as a lump sum to the **Section** bank account.
+- Section officers are responsible for distributing the individual rebate amounts to their qualified student branches.
+
+### Student portion of Section rebate
+
+**Student portion of Section rebate** is **$3** times the student headcount for that cycle, summed across the branches in view. As reflected on the official IEEE Section Statement of Rebate (under Member Breakdown: Student Member @ $3.00 ea.), this is money in the section rebate formula, not the student-branch rebate. It is not added to the branch rebate and is not reduced when an individual branch misses good standing. The section still has its own requirements (higher-grade members, meetings, and timeliness). Those inputs are not in this export, so the portion is an advocacy estimate, not an official payment confirmation.
 
 No timeliness bonus and no activity bonus are applied. The student-branch timeliness cell is empty in the allowance table we encoded, and the export has no filing dates.
 

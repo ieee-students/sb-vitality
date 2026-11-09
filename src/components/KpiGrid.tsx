@@ -28,10 +28,10 @@ export function KpiGrid({ kpis, showRebate }: { kpis: Kpis; showRebate: boolean 
       </article>
       {showRebate ? (
         <article className="kpi-card">
-          <h2>Branch rebate</h2>
+          <h2>Branch rebate (approx.)</h2>
           <p className="kpi-value">{formatUsd(kpis.expectedRebate)}</p>
-          <p className="kpi-note">Foregone at current size: {formatUsd(kpis.foregoneRebate)}</p>
-          <p className="kpi-note">Section student portion, paid to sections: {formatUsd(kpis.sectionStudentPortion)}</p>
+          <p className="kpi-note">At risk (vitality unmet): {formatUsd(kpis.foregoneRebate)}</p>
+          <p className="kpi-note">Student portion of Section rebate: {formatUsd(kpis.sectionStudentPortion)}</p>
         </article>
       ) : null}
     </section>

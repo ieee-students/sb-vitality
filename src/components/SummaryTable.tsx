@@ -123,7 +123,12 @@ export function SummaryTable({
               </th>
             ) : null}
             {showRebate
-              ? header("foregone", "Foregone rebate", standingColumns.length > 0 ? "num after-vitality" : "num")
+              ? header(
+                  "foregone",
+                  "Rebate at risk",
+                  standingColumns.length > 0 ? "num after-vitality" : "num",
+                  "Approximate student-branch rebate at risk because branches do not meet all 4 vitality requirements.",
+                )
               : null}
             {header("immediate", "Immediate action", immediateClass)}
           </tr>

@@ -63,6 +63,25 @@ const mockKpis: Kpis = {
   unknownRebateBranches: 0,
   sectionStudentPortion: 516423,
   sectionPortionMissing: 0,
+  cycleRebates: [
+    {
+      rebateYear: 2027,
+      kind: "open",
+      eventYear: 2026,
+      membersLabel: "Members now",
+      expectedRebate: 198080,
+      foregoneRebate: 391502,
+      unknownRebateBranches: 0,
+      sectionStudentPortion: 516423,
+      sectionPortionMissing: 0,
+      qualifiedBranches: 769,
+      unqualifiedBranches: 3172,
+      activeBranches: 3941,
+      totalBranches: 3941,
+      members: 172141,
+      officersEvaluated: true,
+    },
+  ],
 };
 
 describe("KpiGrid", () => {
@@ -92,8 +111,8 @@ describe("KpiGrid", () => {
     expect(html).toContain("In good standing");
     expect(html).toContain("Branch rebate");
     expect(html).toContain("$198,080");
-    expect(html).toContain("Foregone at current size: $391,502");
-    expect(html).toContain("Section student portion, paid to sections: $516,423");
+    expect(html).toContain("At risk (vitality unmet): $391,502");
+    expect(html).toContain("Student portion of Section rebate: $516,423");
   });
 });
 

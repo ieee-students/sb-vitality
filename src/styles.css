@@ -610,6 +610,202 @@ button, input { font: inherit; }
 }
 .money-grid p:last-child { margin: 0; color: var(--muted); font-size: 0.92rem; }
 
+.rebate-cycle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.rebate-cycle-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.rebate-cycle-card.is-open {
+  border-top: 3px solid var(--blue);
+}
+
+.rebate-cycle-card.is-complete {
+  border-top: 3px solid #75787b;
+}
+
+.rebate-card-header {
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.rebate-card-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rebate-cycle-year {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--navy);
+  font-family: var(--font);
+}
+
+.rebate-cycle-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rebate-cycle-badge.badge-open {
+  background: #e6f4fa;
+  color: #005a91;
+}
+
+.rebate-cycle-badge.badge-complete {
+  background: #f1f3f5;
+  color: #495057;
+}
+
+.rebate-card-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0.35rem 0 0;
+}
+
+.rebate-metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.rebate-metric-box {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid transparent;
+}
+
+.rebate-metric-box.metric-expected {
+  border-left-color: #00843d;
+}
+
+.rebate-metric-box.metric-risk {
+  border-left-color: #ba0c2f;
+}
+
+.rebate-metric-box.metric-section {
+  border-left-color: var(--cyan);
+}
+
+.rebate-metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  display: block;
+}
+
+.rebate-metric-value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0.15rem 0 0.1rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.rebate-metric-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.rebate-card-footer {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #edf2f7;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.rebate-card-footer p {
+  margin: 0;
+}
+
+.rebate-card-footer .rebate-note-warning {
+  color: #854d0e;
+}
+
+.rebate-guidance-box {
+  background: #f0f7fb;
+  border: 1px solid #c9e2f3;
+  border-radius: 10px;
+  padding: 1.15rem;
+  margin-top: 0.75rem;
+}
+
+.rebate-guidance-box h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 0.85rem;
+}
+
+.rebate-guidance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.rebate-guidance-item h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 0.45rem;
+}
+
+.rebate-guidance-item p {
+  font-size: 0.85rem;
+  color: #334155;
+  margin: 0 0 0.5rem;
+  line-height: 1.45;
+}
+
+.rebate-guidance-item ul {
+  font-size: 0.82rem;
+  color: #334155;
+  margin: 0 0 0.5rem;
+  padding-left: 1.2rem;
+  line-height: 1.4;
+}
+
+.rebate-guidance-item li {
+  margin-bottom: 0.2rem;
+}
+
+.rebate-zero-note {
+  font-size: 0.8rem !important;
+  color: #ba0c2f !important;
+  font-weight: 600;
+}
+
+.vtools-rebate-link {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: underline;
+}
+
 .panel { margin-bottom: 0.75rem; }
 .panel-lead { margin-bottom: 0.8rem; }
 
@@ -1161,7 +1357,7 @@ dialog:not([open]) { display: none; }
 }
 
 @media (max-width: 1100px) {
-  .split, .onboard-grid, .money-grid { grid-template-columns: 1fr; }
+  .split, .onboard-grid, .money-grid, .rebate-cycle-grid, .rebate-guidance-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 800px) {

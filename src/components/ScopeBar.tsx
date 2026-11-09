@@ -103,7 +103,7 @@ export function ScopeBar() {
               id="rebate-toggle-help"
               className="toggle-help-text"
             >
-              Planning estimates only. They are not an official payment.
+              Approximate planning estimates only. Rebates require meeting all 4 vitality requirements. Sections receive official amounts from IEEE in Q3 and distribute them to branches.
             </small>
           </div>
         </div>

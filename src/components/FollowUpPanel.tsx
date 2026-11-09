@@ -232,9 +232,11 @@ export function FollowUpPanel({
 
 const actBody = (
   <>
-    <p className="panel-lead">Largest foregone student-branch rebate in this view.</p>
+    <p className="panel-lead">
+      Student branches with the largest approximate rebate at risk in this view.
+    </p>
     {acts.length === 0 ? (
-      <p>No known branch rebate is foregone in this view.</p>
+      <p>No known branch rebate is at risk in this view.</p>
     ) : (
       <>
         <FollowUpListScroll labelId={actTabId} itemCount={acts.length}>

@@ -233,6 +233,25 @@ export interface Kpis {
   sectionStudentPortion: number;
   sectionPortionMissing: number;
   openRebateYear: number;
+  cycleRebates: CycleRebateKpi[];
+}
+
+export interface CycleRebateKpi {
+  rebateYear: number;
+  kind: "open" | "complete";
+  eventYear: number;
+  membersLabel: string;
+  expectedRebate: number;
+  foregoneRebate: number;
+  unknownRebateBranches: number;
+  sectionStudentPortion: number;
+  sectionPortionMissing: number;
+  qualifiedBranches: number;
+  unqualifiedBranches: number;
+  activeBranches: number;
+  totalBranches: number;
+  members: number;
+  officersEvaluated: boolean;
 }
 
 export interface ChartPoint {

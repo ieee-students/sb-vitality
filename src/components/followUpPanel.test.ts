@@ -33,7 +33,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
     expect(VISIBLE_FOLLOWUP_ITEMS).toBe(10);
   });
 
-  it("places tables above Follow-up actions and makes Rebate at the current headcount the last card", () => {
+  it("places tables above Follow-up actions and makes Approximate rebate estimates the last card", () => {
     const mgaView = resolveView(workbook.branches, workbook.scope);
     const regionView = resolveView(workbook.branches, workbook.scope, "r10");
     const sectionView = resolveView(workbook.branches, workbook.scope, "r10", "harbor-section");
@@ -73,7 +73,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
       "Sections",
       "Student branches",
       "Follow-up actions",
-      "Rebate at the current headcount",
+      "Approximate rebate estimates (3-year overview)",
     ]);
     expect(mgaWithRebate).toContain('placeholder="Search sections or region"');
     expect(mgaWithRebate).toContain('Search schools, SPOID, section, or region');
@@ -85,7 +85,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
       "Sections",
       "Student branches",
       "Follow-up actions",
-      "Rebate at the current headcount",
+      "Approximate rebate estimates (3-year overview)",
     ]);
 
     const sectionWithRebate = renderBody(sectionView, true);
@@ -94,7 +94,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
       "Why branches miss",
       "Student branches",
       "Follow-up actions",
-      "Rebate at the current headcount",
+      "Approximate rebate estimates (3-year overview)",
     ]);
 
     const mgaWithoutRebate = renderBody(mgaView, false);
@@ -117,7 +117,7 @@ describe("Dashboard page structure and combined FollowUpPanel", () => {
     ]);
     expect(mgaWithoutRebate).not.toContain("$");
     expect(mgaWithoutRebate).not.toContain("Where to act");
-    expect(mgaWithoutRebate).not.toContain("Rebate at the current headcount");
+    expect(mgaWithoutRebate).not.toContain("Approximate rebate estimates (3-year overview)");
   });
 
   it("combines Dissolution risk and Where to act into tabs when rebate is enabled and links watchlist branches", () => {

@@ -53,6 +53,20 @@ describe("sample rollups", () => {
     expect(kpis.foregoneRebate).toBe(362);
     expect(kpis.sectionStudentPortion).toBe(753);
     expect(kpis.previousRates.map((item) => item.counts.good)).toEqual([8, 8]);
+    expect(kpis.cycleRebates).toHaveLength(3);
+    expect(kpis.cycleRebates[0].rebateYear).toBe(2027);
+    expect(kpis.cycleRebates[0].kind).toBe("open");
+    expect(kpis.cycleRebates[0].expectedRebate).toBe(710);
+    expect(kpis.cycleRebates[0].foregoneRebate).toBe(362);
+    expect(kpis.cycleRebates[0].sectionStudentPortion).toBe(753);
+    expect(kpis.cycleRebates[0].qualifiedBranches).toBe(5);
+    expect(kpis.cycleRebates[0].officersEvaluated).toBe(true);
+    expect(kpis.cycleRebates[1].rebateYear).toBe(2026);
+    expect(kpis.cycleRebates[1].kind).toBe("complete");
+    expect(kpis.cycleRebates[1].officersEvaluated).toBe(false);
+    expect(kpis.cycleRebates[2].rebateYear).toBe(2025);
+    expect(kpis.cycleRebates[2].kind).toBe("complete");
+    expect(kpis.cycleRebates[2].officersEvaluated).toBe(false);
   });
 
   it("uses full column sums for member change even when a branch is missing one year", () => {
