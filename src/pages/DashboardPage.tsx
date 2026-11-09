@@ -37,6 +37,25 @@ function nextSort(current: SortState, key: string, numericFirst: "asc" | "desc")
   return { key, direction: current.direction === "asc" ? "desc" : "asc" };
 }
 
+function branchSortDirection(key: string): "asc" | "desc" {
+  if (
+    key === "school" ||
+    key === "region" ||
+    key === "section" ||
+    key === "spoid" ||
+    key === "status" ||
+    key === "sheet-status" ||
+    key === "risk" ||
+    key === "plan" ||
+    key.startsWith("plan-") ||
+    key === "standing" ||
+    key.startsWith("standing-")
+  ) {
+    return "asc";
+  }
+  return "desc";
+}
+
 export function DashboardPage() {
   const { model, stored, ignoreAnnualPlan, showRebate, error, memoryOnly } = useAppState();
   const navigate = useNavigate();
@@ -424,15 +443,7 @@ export function DashboardBody({
               showSection
               targetAnchor={targetAnchor}
               onSort={(key) =>
-                setBranchSort(
-                  nextSort(
-                    branchSort,
-                    key,
-                    key === "school" || key === "region" || key === "section" || key === "risk"
-                      ? "asc"
-                      : "desc",
-                  ),
-                )
+                setBranchSort(nextSort(branchSort, key, branchSortDirection(key)))
               }
             />
           </section>
@@ -472,13 +483,7 @@ export function DashboardBody({
               showSection
               targetAnchor={targetAnchor}
               onSort={(key) =>
-                setBranchSort(
-                  nextSort(
-                    branchSort,
-                    key,
-                    key === "school" || key === "section" || key === "risk" ? "asc" : "desc",
-                  ),
-                )
+                setBranchSort(nextSort(branchSort, key, branchSortDirection(key)))
               }
             />
           </section>
@@ -498,7 +503,7 @@ export function DashboardBody({
             showRebate={showRebate}
             targetAnchor={targetAnchor}
             onSort={(key) =>
-              setBranchSort(nextSort(branchSort, key, key === "school" || key === "risk" ? "asc" : "desc"))
+              setBranchSort(nextSort(branchSort, key, branchSortDirection(key)))
             }
           />
         </section>

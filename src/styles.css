@@ -1078,6 +1078,10 @@ button, input { font: inherit; }
   border-bottom-color: rgba(255, 255, 255, 0.35);
   box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.35);
 }
+.summary-table .group-heading button {
+  width: 100%;
+  text-align: center;
+}
 .summary-table .group-note { display: block; font-weight: 500; font-size: 0.75rem; }
 .data-table .year-start,
 .summary-table .after-vitality { box-shadow: inset 1px 0 0 rgba(0, 40, 85, 0.18); }

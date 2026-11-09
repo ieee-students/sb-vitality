@@ -60,10 +60,10 @@ export function BranchTable({
     getAnchor: (r) => r.anchor,
   });
 
-  function header(key: string, label: string, className?: string, srSuffix?: string) {
+  function header(key: string, label: string, className?: string, srSuffix?: string, hint?: string) {
     return (
-      <th scope="col" aria-sort={ariaSort(sort, key)} className={className}>
-        <button type="button" onClick={() => onSort(key)}>
+      <th scope="col" aria-sort={ariaSort(sort, key)} className={className} title={hint}>
+        <button type="button" onClick={() => onSort(key)} title={hint} aria-description={hint}>
           {label}
           {srSuffix ? <span className="sr-only"> {srSuffix}</span> : null}
         </button>
@@ -93,10 +93,10 @@ export function BranchTable({
               {header("school", "School", "sticky-col")}
               {showRegion ? header("region", "Region") : null}
               {showSection ? header("section", "Section") : null}
-              <th scope="col">SPOID</th>
-              <th scope="col">Sheet status</th>
+              {header("spoid", "SPOID")}
+              {header("status", "Sheet status")}
               {header("risk", "Dissolution risk")}
-              {sample?.cycles.map((cycleCol) => {
+              {sample?.cycles.map((cycleCol, cycleIndex) => {
                 const isOpen = cycleCol.kind === "open";
                 const standingHint = goodStandingHint(
                   cycleCol.standingLabel,
@@ -108,16 +108,17 @@ export function BranchTable({
                   cycleCol.membersLabel,
                   cycleCol.eventYear,
                 );
+                const membersKey = cycleIndex === 0 ? "members" : `members-${cycleIndex}`;
+                const eventsKey = cycleIndex === 0 ? "events" : `events-${cycleIndex}`;
+                const unreportedKey = cycleIndex === 0 ? "unreported" : `unreported-${cycleIndex}`;
+                const planKey = cycleIndex === 0 ? "plan" : `plan-${cycleIndex}`;
+                const standingKey = cycleIndex === 0 ? "standing" : `standing-${cycleIndex}`;
                 return (
                   <Fragment key={cycleCol.rebateYear}>
-                    {isOpen ? (
-                      header("members", cycleCol.membersLabel, "num year-start")
-                    ) : (
-                      <th scope="col" className="num year-start">{cycleCol.membersLabel}</th>
-                    )}
-                    <th scope="col" className="num">{cycleCol.eventsLabel}</th>
-                    {cycleCol.showUnreported ? <th scope="col" className="num">Unreported</th> : null}
-                    <th scope="col">{cycleCol.planLabel}</th>
+                    {header(membersKey, cycleCol.membersLabel, "num year-start")}
+                    {header(eventsKey, cycleCol.eventsLabel, "num")}
+                    {cycleCol.showUnreported ? header(unreportedKey, "Unreported", "num") : null}
+                    {header(planKey, cycleCol.planLabel)}
                     {cycleCol.officersAvailable ? (
                       header("officers", "Officers", "num", `(${cycleCol.rebateYear} cycle)`)
                     ) : (
@@ -132,17 +133,28 @@ export function BranchTable({
                       </th>
                     )}
                     {isOpen ? header("counselor", "Counselor") : null}
-                    <th scope="col" title={standingHint} aria-description={standingHint}>
-                      <span className="stacked-heading">
+                    <th
+                      scope="col"
+                      aria-sort={ariaSort(sort, standingKey)}
+                      title={standingHint}
+                    >
+                      <button
+                        type="button"
+                        className="stacked-heading"
+                        onClick={() => onSort(standingKey)}
+                        title={standingHint}
+                        aria-description={standingHint}
+                      >
                         {headingLines(cycleCol.standingLabel).map((line) => (
                           <span key={line}>{line}</span>
                         ))}
-                      </span>
+                      </button>
                     </th>
                     {isOpen && showRebate
                       ? header(
                           "foregone",
                           "Branch rebate",
+                          undefined,
                           undefined,
                           "Approximate student branch rebate: projected if in good standing, at risk if vitality conditions are unmet.",
                         )

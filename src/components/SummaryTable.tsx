@@ -117,9 +117,21 @@ export function SummaryTable({
             )}
             {header("events", "Reported events", "num")}
             {standingColumns.length > 0 ? (
-              <th scope="colgroup" colSpan={standingColumns.length * 2} className="group-heading">
-                Vitality status
-                <span className="group-note">Student branches in good standing</span>
+              <th
+                scope="colgroup"
+                colSpan={standingColumns.length * 2}
+                className="group-heading"
+                aria-sort={ariaSort(sort, "rate-0")}
+              >
+                <button
+                  type="button"
+                  onClick={() => onSort("rate-0")}
+                  title="Sort by student branches in good standing %"
+                  aria-description="Sort by student branches in good standing %"
+                >
+                  Vitality status
+                  <span className="group-note">Student branches in good standing</span>
+                </button>
               </th>
             ) : null}
             {showRebate

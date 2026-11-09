@@ -1012,12 +1012,12 @@ export function branchTotals(rows: BranchRow[]): BranchTotals {
 }
 
 function compareSummary(left: SummaryRow, right: SummaryRow, sort: SortState): number {
-  if (sort.key.startsWith("rate-")) {
-    const index = Number(sort.key.slice("rate-".length));
+  if (sort.key.startsWith("rate-") || sort.key === "vitality" || sort.key === "rate") {
+    const index = sort.key.startsWith("rate-") ? Number(sort.key.slice("rate-".length)) : 0;
     return compareNullable(standingRate(left, index), standingRate(right, index), sort.direction);
   }
-  if (sort.key.startsWith("standing-")) {
-    const index = Number(sort.key.slice("standing-".length));
+  if (sort.key.startsWith("standing-") || sort.key === "standing") {
+    const index = sort.key.startsWith("standing-") ? Number(sort.key.slice("standing-".length)) : 0;
     return compareNullable(standingGood(left, index), standingGood(right, index), sort.direction);
   }
   switch (sort.key) {
@@ -1064,6 +1064,30 @@ function compareSummary(left: SummaryRow, right: SummaryRow, sort: SortState): n
   }
 }
 
+const STANDING_RANK: Record<Standing, number> = {
+  good: 0,
+  "needs-support": 1,
+  inactive: 2,
+  incomplete: 3,
+  "not-established": 4,
+};
+
+const PLAN_RANK: Record<PlanValue, number> = {
+  yes: 0,
+  no: 1,
+  blank: 2,
+  unrecognized: 3,
+};
+
+function compareNonEmptyText(left: string, right: string, direction: SortState["direction"]): number {
+  const leftTrim = (left ?? "").trim();
+  const rightTrim = (right ?? "").trim();
+  if (!leftTrim && !rightTrim) return 0;
+  if (!leftTrim) return 1;
+  if (!rightTrim) return -1;
+  return direction === "asc" ? compareText(leftTrim, rightTrim) : compareText(rightTrim, leftTrim);
+}
+
 export function sortBranches(rows: BranchRow[], sort: SortState): BranchRow[] {
   return [...rows].sort((left, right) => {
     const primary = compareBranch(left, right, sort);
@@ -1073,6 +1097,44 @@ export function sortBranches(rows: BranchRow[], sort: SortState): BranchRow[] {
 }
 
 function compareBranch(left: BranchRow, right: BranchRow, sort: SortState): number {
+  if (sort.key === "members" || sort.key.startsWith("members-")) {
+    const index = sort.key === "members" ? 0 : Number(sort.key.slice("members-".length));
+    const leftVal = left.cycles[index]?.members ?? (index === 0 ? left.currentMembers : null);
+    const rightVal = right.cycles[index]?.members ?? (index === 0 ? right.currentMembers : null);
+    return compareNullable(leftVal, rightVal, sort.direction);
+  }
+  if (sort.key === "events" || sort.key.startsWith("events-")) {
+    const index = sort.key === "events" ? 0 : Number(sort.key.slice("events-".length));
+    const leftVal = left.cycles[index]?.events ?? null;
+    const rightVal = right.cycles[index]?.events ?? null;
+    return compareNullable(leftVal, rightVal, sort.direction);
+  }
+  if (sort.key === "unreported" || sort.key.startsWith("unreported-")) {
+    const index = sort.key === "unreported" ? 0 : Number(sort.key.slice("unreported-".length));
+    const leftVal = left.cycles[index]?.unreported ?? (index === 0 ? left.unreported : null);
+    const rightVal = right.cycles[index]?.unreported ?? (index === 0 ? right.unreported : null);
+    return compareNullable(leftVal, rightVal, sort.direction);
+  }
+  if (sort.key === "plan" || sort.key.startsWith("plan-")) {
+    const index = sort.key === "plan" ? 0 : Number(sort.key.slice("plan-".length));
+    const leftPlan = left.cycles[index]?.plan;
+    const rightPlan = right.cycles[index]?.plan;
+    const leftRank = leftPlan != null ? PLAN_RANK[leftPlan] ?? 4 : null;
+    const rightRank = rightPlan != null ? PLAN_RANK[rightPlan] ?? 4 : null;
+    return compareNullable(leftRank, rightRank, sort.direction);
+  }
+  if (sort.key === "standing" || sort.key.startsWith("standing-")) {
+    const index = sort.key === "standing" ? 0 : Number(sort.key.slice("standing-".length));
+    const leftStanding = left.cycles[index]?.standing;
+    const rightStanding = right.cycles[index]?.standing;
+    const leftRank = leftStanding != null ? STANDING_RANK[leftStanding] ?? 5 : null;
+    const rightRank = rightStanding != null ? STANDING_RANK[rightStanding] ?? 5 : null;
+    return compareNullable(leftRank, rightRank, sort.direction);
+  }
+  if (sort.key === "officers" || sort.key.startsWith("officers-")) {
+    return compareNullable(left.officerCount, right.officerCount, sort.direction);
+  }
+
   switch (sort.key) {
     case "school":
       return sort.direction === "asc"
@@ -1086,14 +1148,11 @@ function compareBranch(left: BranchRow, right: BranchRow, sort: SortState): numb
       return sort.direction === "asc"
         ? compareText(left.sectionName, right.sectionName)
         : compareText(right.sectionName, left.sectionName);
-    case "members":
-      return compareNullable(
-        left.cycles[0]?.members ?? left.currentMembers,
-        right.cycles[0]?.members ?? right.currentMembers,
-        sort.direction,
-      );
-    case "officers":
-      return compareNullable(left.officerCount, right.officerCount, sort.direction);
+    case "spoid":
+      return compareNonEmptyText(left.spoid, right.spoid, sort.direction);
+    case "status":
+    case "sheet-status":
+      return compareNonEmptyText(left.sourceStatus, right.sourceStatus, sort.direction);
     case "counselor":
       return compareNullable(left.hasCounselor ? 1 : 0, right.hasCounselor ? 1 : 0, sort.direction);
     case "foregone":

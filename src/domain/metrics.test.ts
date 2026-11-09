@@ -12,6 +12,7 @@ import {
   evaluateAll,
   filterBranches,
   selectTable,
+  sortBranches,
   sortSummary,
   summaryRows,
   summaryTotals,
@@ -665,6 +666,62 @@ describe("sample rollups", () => {
       commaSeparated:
         "RSAC.R10@example.com, region.rep.r10@example.com, co.rsac@example.com, add.rsr@example.com",
     });
+  });
+
+  it("sorts branches by SPOID, sheet status, events, unreported events, plan, and standing across cycles", () => {
+    const evaluations = evaluateAll(workbook.branches, workbook.cycles, false);
+    const rows = branchRows(evaluations, workbook.cycles, false);
+
+    // SPOID sorting
+    const bySpoidAsc = sortBranches(rows, { key: "spoid", direction: "asc" });
+    expect(bySpoidAsc.map((r) => r.spoid)).toEqual([
+      "STB90001",
+      "STB90002",
+      "STB90003",
+      "STB90004",
+      "STB90005",
+      "STB90006",
+      "STB90007",
+      "STB90008",
+      "STB90009",
+      "STB90010",
+      "STB90011",
+    ]);
+
+    const bySpoidDesc = sortBranches(rows, { key: "spoid", direction: "desc" });
+    expect(bySpoidDesc[0].spoid).toBe("STB90011");
+
+    // Sheet status sorting
+    const byStatusAsc = sortBranches(rows, { key: "status", direction: "asc" });
+    expect(byStatusAsc[0].sourceStatus).toBe("Hold");
+
+    // Events sorting (open cycle)
+    const byEventsDesc = sortBranches(rows, { key: "events", direction: "desc" });
+    expect(byEventsDesc[0].cycles[0].events).toBe(7);
+
+    // Events sorting (completed cycle 1)
+    const byEvents1Desc = sortBranches(rows, { key: "events-1", direction: "desc" });
+    expect(byEvents1Desc[0].cycles[1].events).toBe(8);
+
+    // Unreported events sorting
+    const byUnreportedDesc = sortBranches(rows, { key: "unreported", direction: "desc" });
+    expect(byUnreportedDesc[0].cycles[0].unreported).toBe(4);
+
+    // Plan sorting (open cycle: yes comes first on asc)
+    const byPlanAsc = sortBranches(rows, { key: "plan", direction: "asc" });
+    expect(byPlanAsc[0].cycles[0].plan).toBe("yes");
+
+    // Standing sorting (open cycle: good comes first on asc)
+    const byStandingAsc = sortBranches(rows, { key: "standing", direction: "asc" });
+    expect(byStandingAsc[0].cycles[0].standing).toBe("good");
+
+    // Standing sorting (completed cycle 1)
+    const byStanding1Asc = sortBranches(rows, { key: "standing-1", direction: "asc" });
+    expect(byStanding1Asc[0].cycles[1].standing).toBe("good");
+
+    // Members sorting (completed cycle 1)
+    const byMembers1Desc = sortBranches(rows, { key: "members-1", direction: "desc" });
+    expect(byMembers1Desc[0].cycles[1].members).toBe(58);
   });
 });
 
