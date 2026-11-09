@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/ieee-students/sb-vitality/compare/v1.2.0...v1.3.0) (2026-11-09)
+
+
+### Features
+
+* allow sorting across all possible columns in region, section, and sb tables ([8e1c90b](https://github.com/ieee-students/sb-vitality/commit/8e1c90b7a1216389bf9db897ccaf87f4a367b2e3))
+* show 3-cycle rebate overview, clarify vitality requirements, and refine terminology ([ccd5100](https://github.com/ieee-students/sb-vitality/commit/ccd5100d1dfb56733052052782efcc455a95a29b))
+
+
+### Bug Fixes
+
+* stabilize table and follow-up scroll containers to eliminate layout thrashing ([2419983](https://github.com/ieee-students/sb-vitality/commit/2419983af5a6572be7d1da3ecfb508aeaa5bde7c))
+
 ## [1.2.0](https://github.com/ieee-students/sb-vitality/compare/v1.1.0...v1.2.0) (2026-11-07)
 
 
