@@ -357,4 +357,14 @@ describe("10-row scrollable tables with headers and totals", () => {
     expect(html).toContain("padding:0;border:0;background:transparent");
     expect(html).toContain("Total");
   });
+
+  it("stabilizes table and follow-up scroll containers with overflow-anchor and scrollbar-gutter in styles.css", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/styles.css"), "utf8");
+    expect(css).toMatch(/\.table-scroll-capped\s*\{[^}]*overflow-anchor:\s*none;/);
+    expect(css).toMatch(/\.table-scroll-capped\s*\{[^}]*scrollbar-gutter:\s*stable;/);
+    expect(css).toMatch(/\.followup-scroll-capped\s*\{[^}]*overflow-anchor:\s*none;/);
+    expect(css).toMatch(/\.followup-scroll-capped\s*\{[^}]*scrollbar-gutter:\s*stable;/);
+    expect(css).toMatch(/\.data-table tfoot\s*\{[^}]*bottom:\s*0;/);
+    expect(css).toMatch(/\.data-table tfoot\s*\{[^}]*inset-block-end:\s*0;/);
+  });
 });

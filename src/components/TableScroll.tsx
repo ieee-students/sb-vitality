@@ -34,6 +34,9 @@ export function TableScroll({
       return;
     }
 
+    let lastInlineSize = -1;
+    let frame = 0;
+
     const measure = () => {
       const table = container.querySelector("table");
       if (!table) return;
@@ -55,24 +58,37 @@ export function TableScroll({
       const lastVisibleRowBottom = dataRows[count - 1].getBoundingClientRect().bottom;
       const rowsHeight = Math.max(0, lastVisibleRowBottom - firstRowTop);
       const horizontalScrollbar = Math.max(0, container.offsetHeight - container.clientHeight);
-      const total = Math.ceil(headHeight + rowsHeight + footHeight + horizontalScrollbar);
 
-      setCssVar(container, "--table-max-block-size", `${total}px`);
-      setCssVar(container, "--table-head-size", `${Math.ceil(headHeight)}px`);
-      setCssVar(container, "--table-foot-size", `${Math.ceil(footHeight)}px`);
+      const roundedHead = Math.round(headHeight);
+      const roundedFoot = Math.round(footHeight);
+      const roundedRows = Math.round(rowsHeight);
+      const total = roundedHead + roundedRows + roundedFoot + horizontalScrollbar;
+
+      const currentVal = parseFloat(container.style.getPropertyValue("--table-max-block-size"));
+      if (Number.isNaN(currentVal) || Math.abs(currentVal - total) > 1) {
+        setCssVar(container, "--table-max-block-size", `${total}px`);
+      }
+      setCssVar(container, "--table-head-size", `${roundedHead}px`);
+      setCssVar(container, "--table-foot-size", `${roundedFoot}px`);
     };
 
     measure();
+    lastInlineSize = container.clientWidth;
+
     if (typeof ResizeObserver === "undefined") return;
 
-    const table = container.querySelector("table");
-    let frame = 0;
-    const observer = new ResizeObserver(() => {
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const currentWidth = entry?.contentRect?.width ?? container.clientWidth;
+      if (lastInlineSize >= 0 && Math.abs(currentWidth - lastInlineSize) < 1) {
+        return;
+      }
+      lastInlineSize = currentWidth;
+
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
     });
     observer.observe(container);
-    if (table) observer.observe(table);
 
     return () => {
       cancelAnimationFrame(frame);

@@ -953,6 +953,8 @@ button, input { font: inherit; }
 .followup-scroll-capped {
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
   max-block-size: min(var(--followup-max-block-size, 34rem), 75vh);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -1031,6 +1033,8 @@ button, input { font: inherit; }
 .table-scroll-capped {
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
   max-block-size: min(var(--table-max-block-size, 33rem), 85vh);
   scroll-padding-block: var(--table-head-size, 4.5rem) var(--table-foot-size, 3rem);
 }
@@ -1057,6 +1061,7 @@ button, input { font: inherit; }
 }
 .data-table thead {
   position: sticky;
+  top: 0;
   inset-block-start: 0;
   z-index: 3;
 }
@@ -1107,6 +1112,7 @@ button, input { font: inherit; }
 .branch-table { font-variant-numeric: tabular-nums; }
 .data-table tfoot {
   position: sticky;
+  bottom: 0;
   inset-block-end: 0;
   z-index: 3;
 }

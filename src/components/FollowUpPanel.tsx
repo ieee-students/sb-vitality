@@ -56,6 +56,9 @@ function FollowUpListScroll({
       return;
     }
 
+    let lastInlineSize = -1;
+    let frame = 0;
+
     const measure = () => {
       const list = container.querySelector("ul, ol");
       if (!list || list.children.length <= maxVisibleItems) {
@@ -70,21 +73,31 @@ function FollowUpListScroll({
         (Number.parseFloat(computed.paddingBottom) || 0);
       const borderBlock = Math.max(0, container.offsetHeight - container.clientHeight);
       const rowsHeight = Math.max(0, lastVisibleBottom - firstTop);
-      const total = Math.ceil(rowsHeight + paddingBlock + borderBlock);
-      setCssVar(container, "--followup-max-block-size", `${total}px`);
+      const total = Math.round(rowsHeight + paddingBlock + borderBlock);
+
+      const currentVal = parseFloat(container.style.getPropertyValue("--followup-max-block-size"));
+      if (Number.isNaN(currentVal) || Math.abs(currentVal - total) > 1) {
+        setCssVar(container, "--followup-max-block-size", `${total}px`);
+      }
     };
 
     measure();
+    lastInlineSize = container.clientWidth;
+
     if (typeof ResizeObserver === "undefined") return;
 
-    const list = container.querySelector("ul, ol");
-    let frame = 0;
-    const observer = new ResizeObserver(() => {
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const currentWidth = entry?.contentRect?.width ?? container.clientWidth;
+      if (lastInlineSize >= 0 && Math.abs(currentWidth - lastInlineSize) < 1) {
+        return;
+      }
+      lastInlineSize = currentWidth;
+
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
     });
     observer.observe(container);
-    if (list) observer.observe(list);
 
     return () => {
       cancelAnimationFrame(frame);

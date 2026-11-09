@@ -94,11 +94,18 @@ export function useVirtualRows<T>({
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
+    let lastWidth = container.clientWidth;
     const observer =
       typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => {
-            setViewportHeight(container.clientHeight || 600);
-            hasMeasuredRef.current = false;
+        ? new ResizeObserver((entries) => {
+            const entry = entries[0];
+            const currentWidth = entry?.contentRect?.width ?? container.clientWidth;
+            if (Math.abs(currentWidth - lastWidth) >= 1) {
+              lastWidth = currentWidth;
+              hasMeasuredRef.current = false;
+            }
+            const newHeight = container.clientHeight || 600;
+            setViewportHeight((prev) => (Math.abs(prev - newHeight) > 1 ? newHeight : prev));
           })
         : null;
     if (observer) observer.observe(container);
